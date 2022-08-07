@@ -1,0 +1,41 @@
+\begin{algorithmic}[1]
+	\Require $N\gets$ maximum number of generations
+	\Require $\texttt{state} \gets$ initial solution
+	\Require $P \gets$ population size
+	\Require $M \gets$ maximum cluster size
+	\Require $\texttt{overlap} \gets$ population overlap between generations
+	\Require $p_m \gets$ mutation probability
+	\State
+	\Procedure{Genetic\_Algorithm}{\texttt{state}}
+		\State $\texttt{population}\gets$ list of size $P$ filled with copies of \texttt{state}
+		\State $n_{rep}\gets\floor*{(1-\texttt{overlap})\times P}$ \Comment{number of new individuals created at each generation}
+		\While{$i<N_{gen}$}
+			\For{$j\in n_{rep}$}
+				\State $S_1\gets$ \Call{random\_choice}{\texttt{population}}
+				\State $S_2\gets$ \Call{random\_choice}{\texttt{population}}
+				\State $child_j \gets$ \Call{crossover}{$S_1$, $S_2$}
+				\If{\texttt{true} with probability $p_m$}
+                    \State $op\gets$\Call{random\_choice}{$\gls{mov}$, $\gls{sw}$, $\gls{sh}$, $\gls{sl}$}
+                    \State $child_j\gets op(child_j)$
+				\EndIf
+                \State $\gls{lop}(child_j)$
+			\EndFor
+			\State \Call{replace}{\texttt{population}, $child_1,child_2,\ldots$ }
+			\State $i\gets i+1$
+		\EndWhile
+        \State \Return $\max_{\alpha}(\texttt{population})$
+	\EndProcedure
+	\State
+	\Function{replace}{\texttt{population}, \texttt{children}}
+		\State $\texttt{clusters} \gets$ group \texttt{population} by similarity
+        \ForEach{$i \gets 1\ldots\Call{length}{\texttt{children}}$}
+			\State $c\gets$ \Call{largest}{$clusters$}
+			\If{\Call{size}{$c$} $> M$}
+				\State Remove worst from $c$
+			\Else
+				\State Remove worst from $population$
+			\EndIf
+		\EndFor
+		\State insert \texttt{children} into \texttt{population}
+	\EndFunction
+\end{algorithmic}

@@ -1,0 +1,638 @@
+% Much of this section was auto-generated. Fix formating as needed.
+
+\setstretch{1.0}
+
+\section{\texorpdfstring{$2M6P$}{2M6P}}
+
+\begin{table}[H]
+    \centering
+    \caption{Problem specification for $2M6P$.}
+    \begin{minipage}[b]{0.55\linewidth}
+        \centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain       \\
+            \midrule
+            1 & \num{1000} & \num{1} & \num{9} & All modules \\
+2 & \num{1000} & \num{31} & \num{9} & All modules \\
+3 & \num{500} & \num{5} & \num{5} & All modules \\
+4 & \num{100} & \num{3} & \num{4} & All modules \\
+5 & \num{100} & \num{10} & \num{1} & All modules \\
+6 & \num{100} & \num{5} & \num{1} & All modules \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Partition information.}
+    \end{minipage}%
+    \begin{minipage}[b]{0.41\linewidth}
+        \centering
+        \begin{tabular}{cc}
+            \toprule
+            Module   &   Memory   \\
+            \midrule
+            1 & \num{36} \\
+2 & \num{36} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Module information.}
+    \end{minipage}%
+\end{table}
+
+
+\section{\texorpdfstring{$4M10P$}{4M10P}}
+
+\begin{table}[H]
+    \centering
+    \caption{Problem specification for $4M10P$.}
+    \begin{minipage}[b]{0.55\linewidth}
+        \centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain     \\
+            \midrule
+            1 & \num{1000} & \num{23} & \num{8} & All modules \\
+2 & \num{1000} & \num{41} & \num{7} & All modules \\
+3 & \num{1000} & \num{56} & \num{8} & All modules \\
+4 & \num{1000} & \num{77} & \num{6} & All modules \\
+5 & \num{1000} & \num{35} & \num{8} & All modules \\
+6 & \num{500} & \num{14} & \num{7} & All modules \\
+7 & \num{500} & \num{14} & \num{5} & All modules \\
+8 & \num{200} & \num{1} & \num{7} & All modules \\
+9 & \num{200} & \num{12} & \num{3} & All modules \\
+10 & \num{100} & \num{8} & \num{7} & All modules \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Partition information.}
+    \end{minipage}%
+    \begin{minipage}[b]{0.41\linewidth}
+        \centering
+        \begin{tabular}{cc}
+            \toprule
+            Module   &   Memory   \\
+            \midrule
+            1 & \num{32} \\
+2 & \num{31} \\
+3 & \num{32} \\
+4 & \num{31} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Module information.}
+
+        \bigskip
+        \begin{tabular}{lr}
+            \toprule
+            Chain   &   Delay   \\
+            \midrule
+            $p_{8} \rightarrow p_{7}$   &   \num{121} \\
+$p_{3} \rightarrow p_{1}$   &   \num{842} \\
+$p_{8} \rightarrow p_{6}$   &   \num{123} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Chain constraints.}
+    \end{minipage}%
+
+    \bigskip
+
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        $m,n$ & 1 & 2 & 3 & 4 \\\hline
+1 & - & \num{25} & \num{5} & \num{12}\\\hline
+2 & \num{25} & - & \num{6} & \num{6}\\\hline
+3 & \num{5} & \num{6} & - & \num{12}\\\hline
+4 & \num{12} & \num{6} & \num{12} & -\\\hline
+    \end{tabular}
+    \subcaption{Network delays.}
+\end{table}
+
+Other constraints: $f_{8} ≠ f_{9}$, $f_{5} ≠ f_{10}$.
+
+\section{\texorpdfstring{$4M20P$}{4M20P}}
+
+\begin{table}[H]
+    \centering
+    \caption{Problem specification for $4M20P$.}
+    \begin{minipage}[b]{0.55\linewidth}
+        \centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain       \\
+            \midrule
+            1 & \num{1000} & \num{46} & \num{6} & All modules \\
+2 & \num{1000} & \num{29} & \num{8} & All modules \\
+3 & \num{1000} & \num{73} & \num{1} & All modules \\
+4 & \num{500} & \num{16} & \num{4} & All modules \\
+5 & \num{500} & \num{29} & \num{9} & All modules \\
+6 & \num{500} & \num{29} & \num{3} & All modules \\
+7 & \num{500} & \num{5} & \num{6} & All modules \\
+8 & \num{500} & \num{40} & \num{8} & All modules \\
+9 & \num{500} & \num{24} & \num{1} & All modules \\
+10 & \num{200} & \num{1} & \num{3} & All modules \\
+11 & \num{200} & \num{21} & \num{9} & All modules \\
+12 & \num{200} & \num{18} & \num{8} & All modules \\
+13 & \num{200} & \num{21} & \num{2} & All modules \\
+14 & \num{200} & \num{15} & \num{7} & All modules \\
+15 & \num{200} & \num{23} & \num{2} & All modules \\
+16 & \num{200} & \num{3} & \num{7} & All modules \\
+17 & \num{100} & \num{9} & \num{6} & All modules \\
+18 & \num{100} & \num{1} & \num{6} & All modules \\
+19 & \num{100} & \num{2} & \num{5} & All modules \\
+20 & \num{100} & \num{11} & \num{8} & All modules \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Partition information.}
+    \end{minipage}%
+    \begin{minipage}[b]{0.41\linewidth}
+        \centering
+        \begin{tabular}{cc}
+            \toprule
+            Module   &   Memory   \\
+            \midrule
+            1 & \num{60} \\
+2 & \num{63} \\
+3 & \num{62} \\
+4 & \num{63} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Module information.}
+
+        \bigskip
+        \begin{tabular}{lr}
+            \toprule
+            Chain   &   Delay   \\
+            \midrule
+            $p_{7} \rightarrow p_{14}$   &   \num{98} \\
+$p_{13} \rightarrow p_{9}$   &   \num{125} \\
+$p_{18} \rightarrow p_{5}$   &   \num{459} \\
+$p_{9} \rightarrow p_{2}$   &   \num{550} \\
+$p_{10} \rightarrow p_{11}$   &   \num{134} \\
+$p_{19} \rightarrow p_{3}$   &   \num{582} \\
+$p_{15} \rightarrow p_{1}$   &   \num{1003} \\
+$p_{5} \rightarrow p_{19}$   &   \num{52} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Chain constraints.}
+    \end{minipage}%
+
+    \bigskip
+
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        $m,n$ & 1 & 2 & 3 & 4 \\\hline
+1 & - & \num{13} & \num{10} & \num{13}\\\hline
+2 & \num{13} & - & \num{11} & \num{18}\\\hline
+3 & \num{10} & \num{11} & - & \num{16}\\\hline
+4 & \num{13} & \num{18} & \num{16} & -\\\hline
+    \end{tabular}
+    \subcaption{Network delays.}
+\end{table}
+
+Other constraints: $f_{6} ≠ f_{19}$, $f_{14} ≠ f_{4}$, $f_{12} ≠ f_{18}$, $f_{15} ≠ f_{14}$, $f_{7} ≠ f_{2}$, $f_{13} ≠ f_{11}$.
+
+\section{\texorpdfstring{$8M40P$}{8M40P}}
+
+\begin{table}[H]
+    \centering
+    \caption{Problem specification for $8M40P$.}
+    \begin{minipage}[b]{0.55\linewidth}
+        \centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain       \\
+            \midrule
+            1 & \num{1000} & \num{1} & \num{1} & All modules \\
+2 & \num{1000} & \num{64} & \num{4} & All modules \\
+3 & \num{1000} & \num{80} & \num{1} & All modules \\
+4 & \num{1000} & \num{42} & \num{6} & All modules \\
+5 & \num{1000} & \num{37} & \num{3} & All modules \\
+6 & \num{1000} & \num{49} & \num{8} & All modules \\
+7 & \num{1000} & \num{16} & \num{2} & All modules \\
+8 & \num{500} & \num{8} & \num{6} & All modules \\
+9 & \num{500} & \num{23} & \num{1} & All modules \\
+10 & \num{500} & \num{10} & \num{7} & All modules \\
+11 & \num{500} & \num{37} & \num{7} & All modules \\
+12 & \num{500} & \num{29} & \num{7} & All modules \\
+13 & \num{500} & \num{35} & \num{6} & All modules \\
+14 & \num{500} & \num{18} & \num{5} & All modules \\
+15 & \num{500} & \num{34} & \num{8} & All modules \\
+16 & \num{500} & \num{15} & \num{1} & All modules \\
+17 & \num{500} & \num{11} & \num{2} & All modules \\
+18 & \num{500} & \num{30} & \num{3} & All modules \\
+19 & \num{500} & \num{22} & \num{3} & All modules \\
+20 & \num{500} & \num{30} & \num{3} & All modules \\
+21 & \num{500} & \num{31} & \num{1} & All modules \\
+22 & \num{200} & \num{2} & \num{3} & All modules \\
+23 & \num{200} & \num{9} & \num{5} & All modules \\
+24 & \num{200} & \num{21} & \num{3} & All modules \\
+25 & \num{200} & \num{21} & \num{5} & All modules \\
+26 & \num{200} & \num{13} & \num{8} & All modules \\
+27 & \num{200} & \num{19} & \num{9} & All modules \\
+28 & \num{200} & \num{18} & \num{8} & All modules \\
+29 & \num{200} & \num{12} & \num{3} & All modules \\
+30 & \num{200} & \num{22} & \num{7} & All modules \\
+31 & \num{200} & \num{8} & \num{9} & All modules \\
+32 & \num{100} & \num{2} & \num{8} & All modules \\
+33 & \num{100} & \num{5} & \num{8} & All modules \\
+34 & \num{100} & \num{2} & \num{3} & All modules \\
+35 & \num{100} & \num{14} & \num{1} & All modules \\
+36 & \num{100} & \num{13} & \num{3} & All modules \\
+37 & \num{100} & \num{9} & \num{8} & All modules \\
+38 & \num{100} & \num{14} & \num{2} & All modules \\
+39 & \num{100} & \num{10} & \num{2} & All modules \\
+40 & \num{100} & \num{2} & \num{7} & All modules \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Partition information.}
+    \end{minipage}%
+    \begin{minipage}[b]{0.41\linewidth}
+        \centering
+        \begin{tabular}{cc}
+            \toprule
+            Module   &   Memory   \\
+            \midrule
+            1 & \num{61} \\
+2 & \num{64} \\
+3 & \num{59} \\
+4 & \num{64} \\
+5 & \num{65} \\
+6 & \num{60} \\
+7 & \num{62} \\
+8 & \num{60} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Module information.}
+
+        \bigskip
+        \begin{tabular}{lr}
+            \toprule
+            Chain   &   Delay   \\
+            \midrule
+            $p_{21} \rightarrow p_{26}$   &   \num{252} \\
+$p_{23} \rightarrow p_{7}$   &   \num{215} \\
+$p_{37} \rightarrow p_{18}$   &   \num{424} \\
+$p_{1} \rightarrow p_{30}$   &   \num{166} \\
+$p_{10} \rightarrow p_{25}$   &   \num{50} \\
+$p_{27} \rightarrow p_{6}$   &   \num{706} \\
+$p_{28} \rightarrow p_{34}$   &   \num{119} \\
+$p_{30} \rightarrow p_{20}$   &   \num{259} \\
+$p_{17} \rightarrow p_{14}$   &   \num{321} \\
+$p_{21} \rightarrow p_{38}$   &   \num{109} \\
+$p_{8} \rightarrow p_{18}$   &   \num{309} \\
+$p_{5} \rightarrow p_{30}$   &   \num{204} \\
+$p_{18} \rightarrow p_{23}$   &   \num{205} \\
+$p_{8} \rightarrow p_{28}$   &   \num{157} \\
+$p_{32} \rightarrow p_{24}$   &   \num{243} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Chain constraints.}
+    \end{minipage}%
+
+    \bigskip
+
+
+\end{table}
+\begin{table}[H]
+	\ContinuedFloat
+	\centering
+    \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+        \hline
+        $m,n$ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 \\\hline
+1 & - & \num{9} & \num{25} & \num{16} & \num{10} & \num{11} & \num{10} & \num{7}\\\hline
+2 & \num{9} & - & \num{23} & \num{11} & \num{18} & \num{18} & \num{7} & \num{15}\\\hline
+3 & \num{25} & \num{23} & - & \num{15} & \num{11} & \num{15} & \num{20} & \num{11}\\\hline
+4 & \num{16} & \num{11} & \num{15} & - & \num{5} & \num{6} & \num{17} & \num{7}\\\hline
+5 & \num{10} & \num{18} & \num{11} & \num{5} & - & \num{5} & \num{7} & \num{23}\\\hline
+6 & \num{11} & \num{18} & \num{15} & \num{6} & \num{5} & - & \num{25} & \num{17}\\\hline
+7 & \num{10} & \num{7} & \num{20} & \num{17} & \num{7} & \num{25} & - & \num{21}\\\hline
+8 & \num{7} & \num{15} & \num{11} & \num{7} & \num{23} & \num{17} & \num{21} & -\\\hline
+    \end{tabular}
+    \subcaption{Network delays.}
+\end{table}
+
+Other constraints: $f_{31} ≠ f_{29}$, $f_{34} ≠ f_{9}$, $f_{15} ≠ f_{25}$, $f_{11} ≠ f_{40}$, $f_{38} ≠ f_{29}$, $f_{35} ≠ f_{10}$, $f_{32} ≠ f_{9}$, $f_{4} ≠ f_{25}$, $f_{12} ≠ f_{30}$, $f_{16} ≠ f_{25}$, $f_{28} = f_{29}$, $f_{2} = f_{8}$, $f_{4} = f_{15}$, $f_{31} = f_{38}$.
+
+\section{\texorpdfstring{$20M100P$}{20M100P}}
+
+\begin{table}[H]
+    \centering
+    \caption{Problem specification for $20M100P$.}
+    \begin{minipage}[b]{0.55\linewidth}
+        \centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain       \\
+            \midrule
+            1 & \num{1000} & \num{55} & \num{2} & All modules \\
+2 & \num{1000} & \num{78} & \num{1} & All modules \\
+3 & \num{1000} & \num{28} & \num{4} & All modules \\
+4 & \num{1000} & \num{2} & \num{6} & All modules \\
+5 & \num{1000} & \num{75} & \num{6} & All modules \\
+6 & \num{1000} & \num{53} & \num{7} & All modules \\
+7 & \num{1000} & \num{47} & \num{7} & All modules \\
+8 & \num{1000} & \num{32} & \num{2} & All modules \\
+9 & \num{1000} & \num{46} & \num{1} & All modules \\
+10 & \num{1000} & \num{42} & \num{1} & All modules \\
+11 & \num{1000} & \num{68} & \num{6} & All modules \\
+12 & \num{1000} & \num{48} & \num{7} & All modules \\
+13 & \num{1000} & \num{79} & \num{2} & All modules \\
+14 & \num{1000} & \num{45} & \num{8} & All modules \\
+15 & \num{1000} & \num{74} & \num{9} & All modules \\
+16 & \num{1000} & \num{12} & \num{7} & All modules \\
+17 & \num{1000} & \num{46} & \num{7} & All modules \\
+18 & \num{1000} & \num{80} & \num{5} & All modules \\
+19 & \num{1000} & \num{24} & \num{6} & All modules \\
+20 & \num{1000} & \num{38} & \num{1} & All modules \\
+21 & \num{1000} & \num{45} & \num{8} & All modules \\
+22 & \num{1000} & \num{78} & \num{9} & All modules \\
+23 & \num{1000} & \num{21} & \num{8} & All modules \\
+24 & \num{500} & \num{24} & \num{1} & All modules \\
+25 & \num{500} & \num{23} & \num{9} & All modules \\
+26 & \num{500} & \num{37} & \num{2} & All modules \\
+27 & \num{500} & \num{15} & \num{4} & All modules \\
+28 & \num{500} & \num{40} & \num{4} & All modules \\
+29 & \num{500} & \num{40} & \num{8} & All modules \\
+30 & \num{500} & \num{11} & \num{1} & All modules \\
+31 & \num{500} & \num{13} & \num{8} & All modules \\
+32 & \num{500} & \num{7} & \num{2} & All modules \\
+33 & \num{500} & \num{17} & \num{7} & All modules \\
+34 & \num{500} & \num{9} & \num{3} & All modules \\
+35 & \num{500} & \num{24} & \num{6} & All modules \\
+36 & \num{500} & \num{40} & \num{5} & All modules \\
+37 & \num{500} & \num{4} & \num{6} & All modules \\
+38 & \num{500} & \num{24} & \num{4} & All modules \\
+39 & \num{500} & \num{34} & \num{7} & All modules \\
+40 & \num{500} & \num{11} & \num{6} & All modules \\
+		\bottomrule
+        \end{tabular}
+        \subcaption{Partition information. (1/3)}
+    \end{minipage}%
+    \begin{minipage}[b]{0.41\linewidth}
+        \centering
+        \begin{tabular}{cc}
+            \toprule
+            Module   &   Memory   \\
+            \midrule
+            1 & \num{62} \\
+2 & \num{63} \\
+3 & \num{60} \\
+4 & \num{59} \\
+5 & \num{65} \\
+6 & \num{60} \\
+7 & \num{63} \\
+8 & \num{65} \\
+9 & \num{62} \\
+10 & \num{62} \\
+11 & \num{62} \\
+12 & \num{65} \\
+13 & \num{63} \\
+14 & \num{61} \\
+15 & \num{62} \\
+16 & \num{63} \\
+17 & \num{60} \\
+18 & \num{65} \\
+19 & \num{59} \\
+20 & \num{59} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Module information.}
+    \end{minipage}%
+\end{table}
+
+\begin{table}[H]
+	\ContinuedFloat
+	\centering
+	\begin{minipage}[b]{0.55\linewidth}
+        \centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain     \\
+            \midrule
+			41 & \num{500} & \num{5} & \num{4} & All modules \\
+			42 & \num{500} & \num{31} & \num{1} & All modules \\
+			43 & \num{500} & \num{16} & \num{1} & All modules \\
+			44 & \num{500} & \num{17} & \num{2} & All modules \\
+			45 & \num{500} & \num{6} & \num{3} & All modules \\
+            46 & \num{500} & \num{30} & \num{2} & All modules \\
+			47 & \num{500} & \num{23} & \num{6} & All modules \\
+			48 & \num{500} & \num{3} & \num{6} & All modules \\
+			49 & \num{200} & \num{11} & \num{4} & All modules \\
+			50 & \num{200} & \num{9} & \num{4} & All modules \\
+			51 & \num{200} & \num{19} & \num{2} & All modules \\
+			52 & \num{200} & \num{12} & \num{2} & All modules \\
+			53 & \num{200} & \num{16} & \num{7} & All modules \\
+			54 & \num{200} & \num{15} & \num{2} & All modules \\
+			55 & \num{200} & \num{15} & \num{7} & All modules \\
+			56 & \num{200} & \num{13} & \num{4} & All modules \\
+			57 & \num{200} & \num{16} & \num{9} & All modules \\
+			58 & \num{200} & \num{21} & \num{1} & All modules \\
+			59 & \num{200} & \num{17} & \num{2} & All modules \\
+			60 & \num{200} & \num{9} & \num{2} & All modules \\
+			61 & \num{200} & \num{18} & \num{6} & All modules \\
+			62 & \num{200} & \num{17} & \num{9} & All modules \\
+			63 & \num{200} & \num{17} & \num{6} & All modules \\
+			64 & \num{200} & \num{12} & \num{3} & All modules \\
+			65 & \num{200} & \num{16} & \num{5} & All modules \\
+			66 & \num{200} & \num{12} & \num{9} & All modules \\
+			67 & \num{200} & \num{23} & \num{9} & All modules \\
+			68 & \num{200} & \num{3} & \num{6} & All modules \\
+			69 & \num{200} & \num{4} & \num{2} & All modules \\
+			70 & \num{200} & \num{23} & \num{9} & All modules \\
+			71 & \num{200} & \num{20} & \num{4} & All modules \\
+			72 & \num{200} & \num{18} & \num{4} & All modules \\
+			73 & \num{100} & \num{8} & \num{5} & All modules \\
+			74 & \num{100} & \num{4} & \num{4} & All modules \\
+			75 & \num{100} & \num{12} & \num{4} & All modules \\
+			76 & \num{100} & \num{8} & \num{2} & All modules \\
+			77 & \num{100} & \num{1} & \num{4} & All modules \\
+			78 & \num{100} & \num{1} & \num{6} & All modules \\
+			79 & \num{100} & \num{3} & \num{6} & All modules \\
+			80 & \num{100} & \num{8} & \num{2} & All modules \\
+			81 & \num{100} & \num{15} & \num{3} & All modules \\
+			82 & \num{100} & \num{1} & \num{9} & All modules \\
+			83 & \num{100} & \num{3} & \num{4} & All modules \\
+			84 & \num{100} & \num{10} & \num{9} & All modules \\
+			85 & \num{100} & \num{10} & \num{2} & All modules \\
+			86 & \num{100} & \num{2} & \num{2} & All modules \\
+			87 & \num{100} & \num{5} & \num{5} & All modules \\
+			88 & \num{100} & \num{14} & \num{4} & All modules \\
+			89 & \num{100} & \num{10} & \num{8} & All modules \\
+			90 & \num{100} & \num{7} & \num{3} & All modules \\
+			\bottomrule
+        \end{tabular}
+        \subcaption{Partition information. (2/3)}
+    \end{minipage}%
+    \begin{minipage}[b]{0.41\linewidth}
+        \centering
+        \begin{tabular}{lr}
+            \toprule
+            Chain   &   Delay   \\
+            \midrule
+            $p_{85} \rightarrow p_{86}$   &   \num{120} \\
+$p_{39} \rightarrow p_{54}$   &   \num{143} \\
+$p_{41} \rightarrow p_{1}$   &   \num{684} \\
+$p_{12} \rightarrow p_{50}$   &   \num{217} \\
+$p_{78} \rightarrow p_{100}$   &   \num{118} \\
+$p_{70} \rightarrow p_{68}$   &   \num{56} \\
+$p_{83} \rightarrow p_{24}$   &   \num{111} \\
+$p_{94} \rightarrow p_{79}$   &   \num{96} \\
+$p_{6} \rightarrow p_{60}$   &   \num{141} \\
+$p_{36} \rightarrow p_{56}$   &   \num{87} \\
+$p_{3} \rightarrow p_{89}$   &   \num{77} \\
+$p_{57} \rightarrow p_{67}$   &   \num{130} \\
+$p_{95} \rightarrow p_{43}$   &   \num{324} \\
+$p_{9} \rightarrow p_{64}$   &   \num{242} \\
+$p_{73} \rightarrow p_{36}$   &   \num{481} \\
+$p_{8} \rightarrow p_{33}$   &   \num{285} \\
+$p_{21} \rightarrow p_{43}$   &   \num{264} \\
+$p_{75} \rightarrow p_{25}$   &   \num{384} \\
+$p_{29} \rightarrow p_{33}$   &   \num{423} \\
+$p_{5} \rightarrow p_{30}$   &   \num{260} \\
+$p_{53} \rightarrow p_{8}$   &   \num{788} \\
+$p_{5} \rightarrow p_{44}$   &   \num{215} \\
+$p_{4} \rightarrow p_{73}$   &   \num{52} \\
+$p_{19} \rightarrow p_{96}$   &   \num{100} \\
+$p_{38} \rightarrow p_{13}$   &   \num{640} \\
+$p_{46} \rightarrow p_{19}$   &   \num{528} \\
+$p_{67} \rightarrow p_{70}$   &   \num{180} \\
+$p_{82} \rightarrow p_{33}$   &   \num{460} \\
+$p_{56} \rightarrow p_{74}$   &   \num{84} \\
+$p_{82} \rightarrow p_{99}$   &   \num{98} \\
+$p_{1} \rightarrow p_{42}$   &   \num{425} \\
+$p_{69} \rightarrow p_{99}$   &   \num{118} \\
+$p_{60} \rightarrow p_{33}$   &   \num{500} \\
+$p_{99} \rightarrow p_{86}$   &   \num{61} \\
+$p_{30} \rightarrow p_{33}$   &   \num{165} \\
+$p_{73} \rightarrow p_{70}$   &   \num{229} \\
+$p_{6} \rightarrow p_{96}$   &   \num{77} \\
+$p_{54} \rightarrow p_{1}$   &   \num{642} \\
+$p_{68} \rightarrow p_{60}$   &   \num{138} \\
+$p_{2} \rightarrow p_{21}$   &   \num{704} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Chain constraints.}
+    \end{minipage}%
+\end{table}
+
+\begin{table}[H]
+	\ContinuedFloat
+	\centering
+        \begin{tabular}{ccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain     \\
+            \midrule
+			91 & \num{100} & \num{15} & \num{5} & All modules \\
+			92 & \num{100} & \num{1} & \num{6} & All modules \\
+			93 & \num{100} & \num{13} & \num{4} & All modules \\
+			94 & \num{100} & \num{7} & \num{5} & All modules \\
+			95 & \num{100} & \num{14} & \num{1} & All modules \\
+			96 & \num{100} & \num{7} & \num{9} & All modules \\
+			97 & \num{100} & \num{3} & \num{8} & All modules \\
+			98 & \num{100} & \num{1} & \num{2} & All modules \\
+			99 & \num{100} & \num{6} & \num{6} & All modules \\
+			100 & \num{100} & \num{2} & \num{3} & All modules \\
+			\bottomrule
+        \end{tabular}
+        \subcaption{Partition information. (3/3)}
+
+		\bigskip
+		{\scriptsize
+		\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+        \hline
+        $m,n$ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 \\\hline
+1 & - & \num{17} & \num{11} & \num{12} & \num{12} & \num{8} & \num{25} & \num{16} & \num{19} & \num{11} & \num{21} & \num{17} & \num{23} & \num{12} & \num{5} & \num{17} & \num{12} & \num{18} & \num{6} & \num{8}\\\hline
+2 & \num{17} & - & \num{6} & \num{11} & \num{25} & \num{18} & \num{13} & \num{24} & \num{11} & \num{18} & \num{24} & \num{6} & \num{22} & \num{11} & \num{6} & \num{7} & \num{23} & \num{11} & \num{5} & \num{17}\\\hline
+3 & \num{11} & \num{6} & - & \num{20} & \num{15} & \num{5} & \num{5} & \num{8} & \num{22} & \num{17} & \num{24} & \num{20} & \num{5} & \num{17} & \num{25} & \num{16} & \num{6} & \num{13} & \num{13} & \num{20}\\\hline
+4 & \num{12} & \num{11} & \num{20} & - & \num{14} & \num{16} & \num{24} & \num{6} & \num{21} & \num{22} & \num{20} & \num{7} & \num{16} & \num{13} & \num{11} & \num{19} & \num{11} & \num{23} & \num{18} & \num{25}\\\hline
+5 & \num{12} & \num{25} & \num{15} & \num{14} & - & \num{20} & \num{23} & \num{6} & \num{11} & \num{20} & \num{14} & \num{21} & \num{9} & \num{7} & \num{25} & \num{15} & \num{6} & \num{24} & \num{20} & \num{15}\\\hline
+6 & \num{8} & \num{18} & \num{5} & \num{16} & \num{20} & - & \num{15} & \num{24} & \num{8} & \num{13} & \num{8} & \num{17} & \num{6} & \num{6} & \num{21} & \num{24} & \num{6} & \num{9} & \num{17} & \num{25}\\\hline
+7 & \num{25} & \num{13} & \num{5} & \num{24} & \num{23} & \num{15} & - & \num{16} & \num{5} & \num{9} & \num{12} & \num{23} & \num{23} & \num{18} & \num{9} & \num{13} & \num{9} & \num{19} & \num{20} & \num{12}\\\hline
+8 & \num{16} & \num{24} & \num{8} & \num{6} & \num{6} & \num{24} & \num{16} & - & \num{20} & \num{23} & \num{18} & \num{25} & \num{22} & \num{21} & \num{10} & \num{7} & \num{7} & \num{10} & \num{10} & \num{13}\\\hline
+9 & \num{19} & \num{11} & \num{22} & \num{21} & \num{11} & \num{8} & \num{5} & \num{20} & - & \num{5} & \num{19} & \num{15} & \num{5} & \num{18} & \num{23} & \num{25} & \num{8} & \num{15} & \num{14} & \num{9}\\\hline
+10 & \num{11} & \num{18} & \num{17} & \num{22} & \num{20} & \num{13} & \num{9} & \num{23} & \num{5} & - & \num{21} & \num{5} & \num{21} & \num{20} & \num{19} & \num{20} & \num{12} & \num{22} & \num{19} & \num{21}\\\hline
+11 & \num{21} & \num{24} & \num{24} & \num{20} & \num{14} & \num{8} & \num{12} & \num{18} & \num{19} & \num{21} & - & \num{14} & \num{24} & \num{11} & \num{16} & \num{19} & \num{19} & \num{18} & \num{21} & \num{19}\\\hline
+12 & \num{17} & \num{6} & \num{20} & \num{7} & \num{21} & \num{17} & \num{23} & \num{25} & \num{15} & \num{5} & \num{14} & - & \num{17} & \num{17} & \num{19} & \num{18} & \num{18} & \num{13} & \num{23} & \num{23}\\\hline
+13 & \num{23} & \num{22} & \num{5} & \num{16} & \num{9} & \num{6} & \num{23} & \num{22} & \num{5} & \num{21} & \num{24} & \num{17} & - & \num{21} & \num{14} & \num{15} & \num{9} & \num{22} & \num{20} & \num{22}\\\hline
+14 & \num{12} & \num{11} & \num{17} & \num{13} & \num{7} & \num{6} & \num{18} & \num{21} & \num{18} & \num{20} & \num{11} & \num{17} & \num{21} & - & \num{8} & \num{19} & \num{16} & \num{13} & \num{24} & \num{6}\\\hline
+15 & \num{5} & \num{6} & \num{25} & \num{11} & \num{25} & \num{21} & \num{9} & \num{10} & \num{23} & \num{19} & \num{16} & \num{19} & \num{14} & \num{8} & - & \num{5} & \num{7} & \num{9} & \num{23} & \num{15}\\\hline
+16 & \num{17} & \num{7} & \num{16} & \num{19} & \num{15} & \num{24} & \num{13} & \num{7} & \num{25} & \num{20} & \num{19} & \num{18} & \num{15} & \num{19} & \num{5} & - & \num{7} & \num{10} & \num{15} & \num{25}\\\hline
+17 & \num{12} & \num{23} & \num{6} & \num{11} & \num{6} & \num{6} & \num{9} & \num{7} & \num{8} & \num{12} & \num{19} & \num{18} & \num{9} & \num{16} & \num{7} & \num{7} & - & \num{12} & \num{12} & \num{15}\\\hline
+18 & \num{18} & \num{11} & \num{13} & \num{23} & \num{24} & \num{9} & \num{19} & \num{10} & \num{15} & \num{22} & \num{18} & \num{13} & \num{22} & \num{13} & \num{9} & \num{10} & \num{12} & - & \num{9} & \num{16}\\\hline
+19 & \num{6} & \num{5} & \num{13} & \num{18} & \num{20} & \num{17} & \num{20} & \num{10} & \num{14} & \num{19} & \num{21} & \num{23} & \num{20} & \num{24} & \num{23} & \num{15} & \num{12} & \num{9} & - & \num{9}\\\hline
+20 & \num{8} & \num{17} & \num{20} & \num{25} & \num{15} & \num{25} & \num{12} & \num{13} & \num{9} & \num{21} & \num{19} & \num{23} & \num{22} & \num{6} & \num{15} & \num{25} & \num{15} & \num{16} & \num{9} & -\\\hline
+    \end{tabular}}
+    \subcaption{Network delays.}
+\end{table}
+
+Other constraints: $f_{10} ≠ f_{5}$, $f_{39} ≠ f_{53}$, $f_{49} ≠ f_{40}$, $f_{74} ≠ f_{4}$, $f_{92} ≠ f_{31}$, $f_{40} ≠ f_{12}$, $f_{46} ≠ f_{19}$, $f_{35} ≠ f_{23}$, $f_{95} ≠ f_{6}$, $f_{32} ≠ f_{45}$, $f_{59} ≠ f_{76}$, $f_{51} ≠ f_{37}$, $f_{87} ≠ f_{9}$, $f_{41} ≠ f_{61}$, $f_{58} ≠ f_{8}$, $f_{24} ≠ f_{56}$, $f_{22} ≠ f_{11}$, $f_{9} ≠ f_{25}$, $f_{17} ≠ f_{68}$, $f_{34} = f_{82}$, $f_{65} = f_{77}$, $f_{86} = f_{90}$, $f_{29} = f_{97}$, $f_{34} = f_{54}$, $f_{54} = f_{82}$, $f_{33} = f_{96}$.
+
+
+\section{\texorpdfstring{$3M15P\mathdash S$}{3M15PS}}
+
+\begin{table}[H]
+    \centering
+    \caption{Problem specification for $3M15P\mathdash S$.}
+        \centering
+        \begin{tabular}{ccccccc}
+            \toprule
+            Partition   & Period       & Duration   & Memory    & Domain & Preemption points & Deadline      \\
+            \midrule
+1 & \num{1000} & \num{100} & \num{5} & All modules & $\braces*{\num{40},\num{80}}$ & \num{200}\\
+2 & \num{1000} & \num{50} & \num{3} & All modules  & $\braces*{}$ & -- \\
+3 & \num{1000} & \num{100} & \num{3} & All modules & $\braces*{\num{25},\num{40},\num{50},\num{60},\num{75}}$ & \num{300} \\
+4 & \num{1000} & \num{70} & \num{3} & All modules  & $\braces*{\num{20},\num{40}}$ & \num{220}\\
+5 & \num{500} & \num{35} & \num{4} & All modules   & $\braces*{}$ & -- \\
+6 & \num{500} & \num{25} & \num{4} & All modules   & $\braces*{}$ & -- \\
+7 & \num{500} & \num{50} & \num{2} & All modules   & $\braces*{}$ & -- \\
+8 & \num{250} & \num{50} & \num{5} & All modules   & $\braces*{\num{20},\num{25},\num{30},\num{35}}$ & \num{175}\\
+9 & \num{250} & \num{20} & \num{6} & All modules   & $\braces*{}$ & -- \\
+10 & \num{200} & \num{30} & \num{7} & All modules  & $\braces*{}$ & -- \\
+11 & \num{100} & \num{10} & \num{4} & All modules  & $\braces*{}$ & -- \\
+12 & \num{100} & \num{20} & \num{2} & All modules  & $\braces*{}$ & -- \\
+13 & \num{100} & \num{5} & \num{5} & All modules   & $\braces*{}$ & -- \\
+14 & \num{100} & \num{10} & \num{5} & All modules  & $\braces*{}$ & -- \\
+15 & \num{50} & \num{2} & \num{6} & All modules    & $\braces*{}$ & -- \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Partition information.}
+
+        \bigskip
+    \begin{minipage}[b]{0.33\linewidth}
+        \centering
+        \begin{tabular}{cc}
+            \toprule
+            Module   &   Memory   \\
+            \midrule
+            1 & \num{33} \\
+            2 & \num{35} \\
+            3 & \num{30} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Module information.}
+    \end{minipage}%
+    \begin{minipage}[b]{0.33\linewidth}
+        \centering
+        \begin{tabular}{lr}
+            \toprule
+            Link   &   Delay   \\
+            \midrule
+            $p_{6} \rightarrow p_{15}$   &   \num{48} \\
+$p_{10} \rightarrow p_{5}$   &   \num{125} \\
+$p_{11} \rightarrow p_{12}$   &   \num{119} \\
+            \bottomrule
+        \end{tabular}
+        \subcaption{Link constraints.}
+    \end{minipage}%
+    \begin{minipage}[b]{0.33\linewidth}
+        \centering
+        \begin{tabular}{|c|c|c|c|}
+            \hline
+            Modules & 1 & 2 & 3 \\\hline
+            1 & - & \num{12} & \num{7}\\\hline
+            2 & \num{12} & - & \num{14}\\\hline
+            3 & \num{7} & \num{14} & -\\\hline
+        \end{tabular}
+    \subcaption{Network delays.}
+    \end{minipage}%
+\end{table}
+
+Other constraints: $f_{8} ≠ f_{1}$, $f_{9} ≠ f_{5}$, $f_{10} ≠ f_{8}$, $f_{1} = f_{12}, ε=1$.
+
+\setstretch{1.5}

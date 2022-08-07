@@ -1,0 +1,501 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\setcounter{chapter}{4}
+
+\begin{document}
+
+\chapter{Results}
+\label{sec:results}
+
+In this chapter, we evaluate the computational performance of the procedures detailed in the previous chapter, dividing this description between analysing some specific algorithms and evaluating the developed scheduling tool as a whole.
+We define test cases of different scales, ranging from a trivial example to an example with scale similar to contemporary industry instances, all generated randomly.
+
+For benchmarking purposes, the results were taken in a machine equipped with an Intel\textsuperscript{®} i7 CPU rated @ \SI{3.6}{\giga\hertz} with \SI{8}{\mega\byte} cache and \SI{16}{\giga\byte} RAM memory, running Linux.
+The tool and all algorithms are implemented in Python 3.6 and the \gls{milp}-based solver used is the open source solver CBC \cite{cbc-solver}.
+All time measurements are taken as the sum of processor time in user model and kernel mode on behalf of the program, and every execution exceeding \SI{24}{\hour} is aborted.
+
+Since the meta-heuristics used are stochastic in nature and the search-space is large, the states visited and the time needed to find a solution with some target value varies greatly for separate runs.
+For this reason, the scheduler is run \num{20} times for each case, and performance evaluated via descriptive statistics.
+In particular, without inferring on the statistical distribution, the most relevant parameter to determine is the median solution time.
+
+\section{Local optimization algorithms}
+
+As a first analysis we evaluate the performance of some key algorithms that solve subproblems rather than the complete scheduling problem, namely the best response algorithm and its important component, the best value algorithm.
+Since these algorithms are deterministic, a statistical analysis is not relevant, although the values presented are an average of a few samples with the purpose of mitigating some inaccuracies present when measuring such short executions.
+In this section, we consider cases with a variable number of partitions whose timing characteristics are listed in table \ref{tab:case1}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Test case for algorithmic evaluation.}
+    \label{tab:case1}
+    \begin{tabular}{ccc|ccc}
+        \toprule
+        partition & $\gls{T}$ & $\gls{e}$ & partition & $\gls{T}$ & $\gls{e}$ \\
+        \midrule
+        \num{1}  &  \num{250 } & \num{10 } &  \num{7 }  & \num{2000}  &  \num{10} \\ 
+        \num{2}  &  \num{1000} & \num{50 } &  \num{8 }  & \num{500 }  &  \num{10} \\ 
+        \num{3}  &  \num{1000} & \num{20 } &  \num{9 }  & \num{250 }  &  \num{20} \\ 
+        \num{4}  &  \num{250 } & \num{10 } &  \num{10}  & \num{1000}  &  \num{20} \\ 
+        \num{5}  &  \num{1000} & \num{100} &  \num{11}  & \num{2000}  &  \num{30} \\ 
+        \num{6}  &  \num{1000} & \num{10 } &  \num{12}  & \num{500 }  &  \num{40} \\ 
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Best value}
+
+The best value procedure (described in section \ref{sec:line}) is repeated many times inside each $\gls{lop}()$ method, therefore its efficiency is critical to the scheduler performance.
+We evaluate two different algorithms for determining the best value.
+Here, \texttt{best\_value\_a} is the exhaustive version which checks the partition utility at each valid offset, having time complexity $\bigO(\gls{T}_i\gls{Np})$, and \texttt{best\_value\_b} is the algorithm that computes the utility only in a set of interest points (not to be confused with the pseudo-code naming in algorithm \ref{alg:best-response-chunks}), which has time complexity $\bigO(\gls{T}_i\gls{Np}^3)$.
+Measurements are taken for several instances with \numrange{2}{12} partitions, and the best value is computed with respect to the partition with index \num{1} from table \ref{tab:case1}.
+
+Figure \ref{fig:best-value-results} presents these results.
+The results from figure \ref{fig:by-partition} suggest that version `a' has time complexity linear with the number of partitions, while version `b' is asymptotically worse, and for the range where we evaluate it, it is consistent with the cubic complexity predicted in section \ref{sec:line}.
+Still, for a moderate number of partitions, version `b' is superior, and the turning point for this example is observed at \num{10} partitions.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/best-value-by-partition.tex}}
+        \caption{Performance as function of the number of partitions.}
+        \label{fig:by-partition}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/best-value-by-chain.tex}}
+        \caption{Performance as function of the number of chains, $\gls{Np}=8$.}
+        \label{fig:by-chain}
+    \end{subfigure}
+    \caption{Performance of two methods for computing the best value for partition offsets.}
+    \label{fig:best-value-results}
+\end{figure}
+
+Since both these versions are modular, it is possible to dispatch the most efficient algorithm at runtime depending on the conditions.
+However, this is hard to implement correctly because of the number of variables that have an impact on performance and the wide ranges of values these can take, and experimentation showed that this introduces overhead that ultimately decreases performance for the regular problem instances we consider.
+
+Regarding the effects of chains, it can be seen in figure \ref{fig:by-chain} that these speed up both algorithms, but more significantly for version `a'.
+When looking quantitatively at these values, it should be noted that the computation of the feasible region via expression \ref{eq:feasible-region} is done as a step prior to this algorithm.
+Also, it must be noted that these chains were cherry-picked for this example in order to gradually impose more restrictiveness to the problem. 
+In real-life instances, the chain delays are not particularly tight, therefore it is common that some chains do not restrict this subproblem at all.
+
+Another factor that influences this algorithm is the partition period for which we compute the best value.
+To evaluate this, we measure performance when changing this period, $\gls{T}_1$, as shown in figure \ref{fig:by-period}.
+Earlier, we predicted linear complexity with respect to the partition period for version `a', and this is what is verified in figure \ref{fig:by-period-line}.
+For version `b', the same is verified, but additionally, this algorithm also performs better if the partition periods are harmonic, or otherwise if they share large factors with the remaining periods.
+The figure suggests different slopes, the smallest is when $\gls{T}_1 = 2^n \cdot 250,\ n∈\mathbb{N}$ which is harmonic with the periods of the remaining partitions from table \ref{tab:case1}.
+In figure \ref{fig:by-period-log}, we present results taken only for these periods in a log-log plot, and this evidences the asymptotic linear complexity for both algorithms, and additionally, it shows that version `b' is superior.
+In real-life cases we expect periods in the order of hundreds to hundreds of thousands, and we confirm for these values that version `b' of the algorithm is superior, even for cases with more partitions than presented.
+
+\begin{figure}[htbp]
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/best-value-by-period.tex}}
+        \caption{Performance of the two methods for linearly increasing periods.}
+        \label{fig:by-period-line}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/best-value-by-period_b.tex}}
+        \caption{Performance of the two methods for harmonic periods.}
+        \label{fig:by-period-log}
+    \end{subfigure}
+    \caption{Effect of the partition period on the best response calculation, with $\gls{Np}=8$.}
+    \label{fig:by-period}
+\end{figure}
+Finally, we analyse only cases with up to \num{12} partitions because in real-life instances the number of partitions per \gls{cpm} is consistently around this value.
+Even if future improvements to \gls{ima} motivate this number to increase, we present an algorithm that has linear time complexity, so this methodology is not invalidated in this case.
+
+\subsection{Best response}
+
+Evaluation of the performance of the best response algorithm is done for the single module case, as described in section \ref{sec:best-response}, and for multiple modules using a parallel approach as described in section \ref{sec:parallel}.
+For the single module case, we use the same test case from table \ref{tab:case1}, and measure the time taken for the best response algorithm to converge for randomly generated starting points, averaging the result.
+The optimal $\gls{alpha}$-parameter is determined using the \gls{milp} formulation, and we list the percentage of starting points that lead to this optimal value, as well as the average final error in $\gls{alpha}$-parameter and the average time to convergence. 
+The results are listed in table \ref{tab:best-response-single}, and the time to convergence is also plotted in figure \ref{fig:best-response-single}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Performance of the best response algorithm as function of the number of partitions.}
+    \label{tab:best-response-single}
+    \begin{tabularx}{\linewidth}{c|cccc>{\RaggedRight}X}
+        \toprule
+        $\gls{Np}$ & $\gls{alpha}_{opt}$ & \gls{milp} time [\si{\second}] & convergence to $\gls{alpha}_{opt}$ [\si{\percent}]  & average error [\si{\percent}] & average convergence time [\si{\milli\second}]\\
+        \midrule
+        \num{2 }  &  \num{4.16} & \num{0.74}    &  \num{100 }   & \num{0      } &  \num{0.07  } \\
+        \num{3 }  &  \num{4.16} & \num{0.72}    &  \num{100 }   & \num{0      } &  \num{0.34  } \\
+        \num{4 }  &  \num{3.56} & \num{1.23}    &  \num{98.4}   & \num{1.34e-2} &  \num{1.46  } \\
+        \num{5 }  &  \num{2.08} & \num{5.26}    &  \num{94.6}   & \num{5.52e-2} &  \num{3.58  } \\
+        \num{6 }  &  \num{2.08} & \num{19.10}   &  \num{96.0}   & \num{2.58e-1} &  \num{8.05  } \\
+        \num{7 }  &  \num{2.08} & \num{248.24}  &  \num{96.0}   & \num{1.90e-1} &  \num{21.61 } \\
+        \num{8 }  &  \num{2.08} & \num{936.18}  &  \num{92.2}   & \num{6.39e-2} &  \num{47.00 } \\
+        \num{9 }  &  \num{1.78} & \num{513.74}  &  \num{42.6}   & \num{5.73e-1} &  \num{90.02 } \\
+        \num{10}  &  \num{1.78} & \num{4514.53} &  \num{41.4}   & \num{6.43e-1} &  \num{108.10} \\
+        \num{11}  &  \num{1.78} & \num{3192.69} &  \num{46.0}   & \num{1.20   } &  \num{168.74} \\
+        \num{12}  &  \num{1.78} & \num{8048.55} &  \num{10.4}   & \num{14.70  } &  \num{278.35} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/best-response-by-partition.tex}}
+        \caption{Single module case.}
+        \label{fig:best-response-single}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/sync-best-response-by-partition.tex}}
+        \caption{Algorithm applied in parallel to 3 modules.}
+        \label{fig:best-response-multi}
+    \end{subfigure}
+    \caption{Performance of the best response algorithm as function of the number of partitions.}
+    \label{fig:best-response-results}
+\end{figure}
+
+
+In terms of validity, the best response algorithm allows to find the optimal solution from a fraction of starting points, which decreases as the number of partitions increases.
+Even when the converged state is not an optimal solution, the error to the $\gls{alpha}$-parameter remains small, but the optimal solution is still expected to be found by restarting the algorithm multiple times.
+Likewise, each restart converges in exponential time as was predicted, and corroborated by the results in figure \ref{fig:best-response-single}.
+The conclusion is this algorithm is very efficient for scheduling or optimizing the schedule of a single module, with a small compromise in optimality that is mitigated by repeating the algorithm for several starting points.
+
+Let us analyse the hardest example shown, with \num{12} partitions.
+For each randomly generated starting point there is a $\SI{10.4}{\percent}$ probability that an optimal solution is found, taking on average \SI{278.35}{\milli\second}.
+To reach an optimal solution with a \SI{99}{\percent} percent probability, \si{42} restarts are required, taking a total of \SI{11.7}{\second}.
+For comparison, the \gls{milp} solver takes over \SI{2}{\hour} to prove optimality for this example.
+
+For the multi-module approach, we use \num{3} modules and make similar measurements for \num{9} to \num{36} partitions, such that the average number of partitions scheduled in each module remains similar to the previous cases.
+Like in the previous analysis, the results are listed in table \ref{tab:best-response-multi} and the time to convergence is plotted in figure \ref{fig:best-response-multi}, however, we elect to omit results for numbers of partitions \numrange{29}{36} for succinctness and because for these large cases we are not able to prove optimality for the solutions found.
+For the cases shown in table \ref{tab:best-response-multi}, optimality is proven by inference.
+Notice that adding an additional partition to a problem with known $\gls{alpha}_{opt}$ creates a problem with at most this value for the $\gls{alpha}$-parameter, thus if a solution with this value is found, it is necessarily optimal.
+Knowing this, we only need to use the \gls{milp} solver for the cases with $\gls{Np}=\braces{9,18}$.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Performance of the parallel best response algorithm as function of the number of partitions.}
+    \label{tab:best-response-multi}
+    \begin{tabular}{c|cccc}
+        \toprule
+        $\gls{Np}$ & $\gls{alpha}_{opt}$ & convergence to $\gls{alpha}_{opt}$ [\si{\percent}]  & average error [\si{\percent}] & average convergence time [\si{\milli\second}] \\
+        \midrule
+        \num{9 }  &  \num{2.08}  &  \num{90.0} & \num{1.41}  &  \num{9.04}   \\
+        \num{10}  &  \num{2.08}  &  \num{84.0} & \num{3.42}  &  \num{9.45}   \\
+        \num{11}  &  \num{2.08}  &  \num{87.0} & \num{1.91}  &  \num{13.14}  \\
+        \num{12}  &  \num{2.08}  &  \num{82.0} & \num{2.88}  &  \num{17.20}  \\
+        \num{13}  &  \num{2.08}  &  \num{75.0} & \num{4.16}  &  \num{17.52}  \\
+        \num{14}  &  \num{2.08}  &  \num{88.0} & \num{3.15}  &  \num{26.64}  \\
+        \num{15}  &  \num{2.08}  &  \num{75.0} & \num{2.41}  &  \num{31.90}  \\
+        \num{16}  &  \num{2.08}  &  \num{68.0} & \num{4.02}  &  \num{41.67}  \\
+        \num{17}  &  \num{2.08}  &  \num{62.0} & \num{4.37}  &  \num{58.96}  \\
+        \num{18}  &  \num{1.55}  &  \num{62.0} & \num{5.51 } &  \num{61.95}  \\
+        \num{19}  &  \num{1.55}  &  \num{53.0} & \num{7.07 } &  \num{88.56}  \\
+        \num{20}  &  \num{1.55}  &  \num{56.0} & \num{5.65 } &  \num{79.08}  \\
+        \num{21}  &  \num{1.55}  &  \num{55.0} & \num{7.62 } &  \num{116.77} \\
+        \num{22}  &  \num{1.55}  &  \num{44.0} & \num{8.51 } &  \num{148.68} \\
+        \num{23}  &  \num{1.55}  &  \num{56.0} & \num{7.08 } &  \num{136.21} \\
+        \num{24}  &  \num{1.55}  &  \num{42.0} & \num{9.98 } &  \num{201.41} \\
+        \num{25}  &  \num{1.55}  &  \num{45.0} & \num{8.10 } &  \num{249.87} \\
+        \num{26}  &  \num{1.55}  &  \num{47.0} & \num{8.50 } &  \num{279.59} \\
+        \num{27}  &  \num{1.55}  &  \num{19.0} & \num{13.94} &  \num{330.34} \\
+        \num{28}  &  \num{1.55}  &  \num{2.00} & \num{12.72} &  \num{427.48} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\todo[inline]{These conclusions do not make sense to me. Revise.}
+
+It is clear that solving several modules in parallel increases the total number of equilibrium points for the same total number of partitions, as there will be overall less restriction to each partition.
+However, we observe that the fraction of starting points that lead to an optimal solution does not decrease as one might expect.
+Instead, the main effect is the increased average error of the solutions found.
+
+The most important remark is related to the time taken for convergence, which compares favourably against the time for a single module considering the same total number of partitions.
+In fact, the determining factor for the convergence speed of this algorithm, and consequently the overall scheduler, is the average number of partitions per module.
+This is further illustrated by the fact that the convergence time is not strictly increasing for this case, as seen in figure \ref{fig:best-response-results}.
+Sometimes, adding a partition to a module with few partitions can restrict the problem and speed up convergence, however, the overall trend remains an exponential increase in convergence time.
+
+
+
+\section{Complete scheduling tool}
+\label{sec:complete-tool}
+
+\subsection{Test cases}
+
+We define five test cases for the problem without multiple windows, which are identified by the number of modules and partitions, and one test case of moderate complexity for a problem where multiple windows are allowed.
+The test cases are generated randomly, choosing periods from the set $\braces{100, 200, 500, 1000}$ which allows non-harmonic periods, and durations up to \SI{15}{\percent} of the respective period.
+With respect to the distribution constraints, the memory requirements of the partitions are set to about \SI{40}{\percent} of the modules' capacity, thus imposing some restriction.
+About \SI{20}{\percent} and \SI{5}{\percent} of partitions are subject to an exclusion and inclusion constraints, respectively, and the domains are not restricted.
+Regarding communications, chains are defined with maximum delays in the order of magnitude of the partition periods, but always in a way that some restriction is imposed.
+The network delays are in the order of magnitude of partition execution requirements and required to be independent of the direction.
+The summary of these test cases is presented in table \ref{tab:cases} and the full characteristics for replication purposes are given in appendix \ref{an:test-cases}.\todo{Necessary?}
+
+\begin{table}[htbp]
+\centering
+\caption{Test cases definition.}
+\label{tab:cases}
+\begin{tabular}{c c c c r}
+    \toprule
+    Designation & $\gls{Nc}$ & $\gls{Np}$ & Number of chains & $\gls{alpha}_{best}$ \\
+    \midrule
+    $2M6P$     & \num{2}  & \num{6}   & \num{0}  & \num{5.5}    \\
+    $4M10P$    & \num{4}  & \num{10}  & \num{3}  & \num{6.403}  \\ 
+    $4M20P$    & \num{4}  & \num{20}  & \num{8}  & \num{2.875}  \\ 
+    $8M40P$    & \num{8}  & \num{40}  & \num{15} & \num{2.984}  \\
+    $20M100P$  & \num{20} & \num{100} & \num{40} & \num{2.325}  \\
+    \midrule
+    $3M15P\mathdash S$ & \num{3} & \num{15} & \num{3} & \num{1.26} \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+The scheduling tool was repeatedly applied to these test cases in the course of gathering results, and the value $\gls{alpha}_{best}$ consists of the best solution ever found, but we do not guarantee that this is the optimal solution, with the exception of $2M6P$, for which the \gls{milp} model was able to prove optimality.
+
+For the problem allowing multiple windows of execution, we define only one test case, $3M15P\mathdash S$, which is generated similarly to the previous ones but with cherry-picked preemption points for 4 partitions, and adjusted durations such that it is infeasible without multiple windows.
+This test case has \num{3} chains constraining the partitions that cannot execute in multiple windows, and $\gls{eps}_{m}=1\ \forall m$.
+
+\subsection{Feasibility problem}
+
+As discussed, asserting feasibility is done by solving the problem until a solution with $\gls{ev}(\gls{St})\geq 1$ is found, thus we begin by evaluating the scheduler for solving the test cases with an upper bound of \num{1} on the evaluation function.
+
+This is compared to the \gls{milp} implementation by adapting the model from section \ref{sec:milp}.
+We do this by adding a constraint $\gls{alpha}\geq 1$ and removing the optimization goal, which in contrast to the heuristic approach consists in a rigorous method to determine feasibility.
+
+\begin{table}[htbp]
+\centering
+    \caption{Scheduler performance finding the first valid solution.}
+    \label{tab:feasibility-results}
+    \begin{tabular}{c c c}
+        \toprule
+        Instance           & $t_{MILP}$          & $t_{heuristic}$ (median) \\
+        \midrule
+        $2M6P$             & \SI{1.00}{\second}  & \SI{0.593}{\second} \\
+        $4M10P$            & \SI{1.34}{\second}  & \SI{0.595}{\second} \\ 
+        $4M20P$            & \SI{6.29}{\second}  & \SI{0.830}{\second} \\ 
+        $8M40P$            & \SI{310.7}{\second} & \SI{1.155}{\second} \\
+        $20M100P$          & $>\SI{24}{\hour}$   & \SI{23.32}{\second} \\
+        \midrule
+        $3M15P\mathdash S$ & NA                  & \SI{74.53}{\second} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Results are shown in table \ref{tab:feasibility-results}.
+This shows that both methods are effective for simple cases, but the solution time increases more drastically for the \gls{milp} solver, finally not converging in useful time for the hardest test case.
+One must note that all examples are subject to an approximately constant time that is spent on parsing and validating the problem data.
+For example, the actual solution time for the \gls{milp} solver (as interfaced by the software) for $2M6P$ is \SI{7.273}{\milli\second}.
+
+The performance of the scheduler is appropriate for the industry setting, where we can expect it to be able to verify feasibility in seconds even for complex problem instances.
+This is certainly useful because system integration depends on many interactions with the different suppliers to define all the parameters and requirements, which are then translated into constraints accepted by this model.
+In this stage, the problem changes quickly and having a tool to check feasibility and build a simple solution is of great benefit to the system integrator.
+
+Again, it must be stressed that only the \gls{milp} approach is able to prove infeasibility, in spite of the heuristic approach failing to provide a valid solution being a strong indication that an instance is infeasible.
+The \gls{milp} model does not support multiple windows and as such is not applicable to $3M15P\mathdash S$, however, assuming single windows, the solver proves infeasibility for this case in \SI{1.19}{\second}.
+
+These results already show the price of allowing multiple windows to the problem complexity, as we see the solution time for $3M15P\mathdash S$ is superior to any of the other test cases that are substantially larger in scale.
+
+\subsection{Optimization problem}
+
+For the optimization problem, we are interested in finding the optimal solution.
+Here, the \gls{milp} approach does not converge in admissible time for any case other than $2M6P$, thus the analysis in this section focuses only on the heuristic scheduler, and we compare the implemented meta-heuristics.
+
+Since it not possible to prove optimality with the heuristic scheduler, we settle for evaluating the solution time to a \textit{good} solution, characterized by a value close to $\gls{alpha}_{best}$.
+For convenience in gathering results, seen as the solution can take hours and must be repeated many times, we choose a target value of $0.9\gls{alpha}_{best}$ for the test cases of larger scale.
+
+The results are presented in figure \ref{fig:boxplots} in the form of boxplots.
+For the reader not familiar with these, boxplots present the quartiles of the data set, with the box detailing the first to third quartiles, divided by the median value.
+The whiskers can represent different things depending on the author. 
+Here, the upper whisker details the highest data sample still within $1.5\gls{iqr}$ of the lower quartile, $\gls{iqr}$ being the interquartile range, and the bottom whisker is defined identically, with any outliers marked in the plot.
+Boxplots do not make assumptions of the underlying statistical distribution, but make it possible to visualize the spread and skewness in the data.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/boxplot-2M6P.tex}}
+        \caption{$2M6P$}
+        \label{fig:boxplot1}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/boxplot-4M10P.tex}}
+        \caption{$4M10P$}
+        \label{fig:boxplot2}
+    \end{subfigure}%
+    
+    \vspace{12mm}
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/boxplot-4M20P.tex}}
+        \caption{$4M20P$}
+        \label{fig:boxplot3}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/boxplot-8M40P.tex}}
+        \caption{$8M40P$}
+        \label{fig:boxplot4}
+    \end{subfigure}%
+    
+    \vspace{12mm}
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/boxplot-20M100P.tex}}
+        \caption{$20M100P$}
+        \label{fig:boxplot5}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/boxplot-3M15PS.tex}}
+        \caption{$3M15P\mathdash S$}
+        \label{fig:boxplot6}
+    \end{subfigure}%
+    \caption{Performance of the scheduler with different meta-heuristics.}
+    \label{fig:boxplots}
+\end{figure}
+
+
+The results indicate that \gls{sa} is best for smaller problems and Tabu-search more reliable for larger problems, while the genetic algorithm shows no clear advantage compared to these two for any of these test cases.
+
+Tabu-search always computes a fixed number of different solutions at each iteration and only one is really used, meaning that the others are effectively wasted.
+When the problem is easy and an improving solution is likely to be found, this procedure wastes time computing many solutions at once.
+In contrast, \gls{sa} immediately accepts improving solutions, hence outperforms Tabu-search for easy problems. 
+
+For harder cases, the benefits of computing many solutions at each iteration start to show, and Tabu-search shows better results for $8M40P$ and $20M100P$.
+Still, it is interesting to note that with many attempts, \gls{sa} likely achieves the minimum solution time of any meta-heuristic, happening when the search progress is especially lucky, as is the case in figure \ref{fig:boxplot5}.
+The converse is also observed, Tabu-search presents a higher maximum solution time than \gls{sa} on all test cases up to $8M40P$, and in general presents more outliers than any other meta-heuristic, which seems to happen when the search progress is particularly unlucky.
+
+The genetic algorithm is comparable to the other two for easier cases, but for $8M40P$ it performs significantly worse, and for $20M100P$ it does not reach the target value in useful time.
+Since the distinguishing feature of the genetic algorithm as compared to the others is the crossover operator, the conclusion is that combining two solutions in the way which was defined is not beneficial to the search process.
+
+As for the consequences to the industrial setting, based on the results for $20M100P$, we can expect to have a fairly optimized solution for the partition scheduling problem consistently in under an hour of processor time (over \SI{75}{\percent} of attempts), which is an excellent result.
+We further expect that real-life cases may be slightly larger than $20M100P$, but given the moderate scaling of the solution time when going from $4M20P$ to $8M40P$ to $20M100P$, it should remain in the order of hours.
+Regarding the multiple window case, the solution time of $3M15P\mathdash S$ is located in between $8M40P$ and $20M100P$, which demonstrates the expensive increase in complexity when we allow multiple windows, and this indicates that, from the scheduling point of view, multiple windows should be avoided unless absolutely necessary for problem feasibility.
+
+
+
+\subsubsection{Comparison with the exact model}
+
+As mentioned, the exact model only proves optimality for $2M6P$ (subject to a \SI{24}{\hour} timeout), taking \SI{3.16}{\second}.
+A passing mention should be made that there is currently a huge gap in the performance of open source \gls{milp} solvers and commercial ones \cite{meindl2012analysis}, and even among the commercial ones, the performance varies greatly depending on the specific problem, thus it is common practice to experiment with different solvers to find the most suitable one for the specific problem.
+This means the \gls{milp} model can potentially perform much better than reported here, and be a viable solution for the more complex examples.
+
+Another clear difference is the heuristic method guarantees that each individual partition is scheduled in a locally optimal slot that maximizes its own execution potential, whereas the exact solver settles for an execution potential equal to the worst one in the system.
+In other words, the \gls{milp} approach maximizes the partition utility in the worst case with no regard for the average case, as pointed out in \textcite{al2012strictly}.
+Going around this would require a multi-objective evaluation function.
+Here we look at the example of $2M6P$, in table \ref{tab:solution2M6P}.
+The solutions found by the \gls{milp} solver and the heuristic scheduler have $\gls{alpha}=5.5$, but the \gls{milp} model achieves an average partition utility $\bar{\gls{alpha-i}}_i=5.87$, and the heuristic scheduler yields $\bar{\gls{alpha-i}}_i=12.23$.
+
+Since the heuristic scheduler relies on the best response algorithm, it suffers from the same limitations for cases with high processor usage fractions, while the exact model does not, being limited only by the problem dimension.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Two optimal solutions for $2M6P$.}
+    \label{tab:solution2M6P}
+    \begin{tabular}{c|crr|crr}
+        \toprule
+        & \multicolumn{3}{c}{\gls{milp}}          & \multicolumn{3}{c}{Heuristic} \\
+        $i$ & $\gls{f}_i$ & $\gls{t}_i$ & $\gls{alpha-i}_i$ & $\gls{f}_i$ & $\gls{t}_i$ & $\gls{alpha-i}_i$ \\
+        \midrule
+        \num{1} & \num{2} & \num{45}  & \num{5.50}  & \num{2} & \num{28}  & \num{5.60}  \\
+        \num{2} & \num{1} & \num{462} & \num{5.52}  & \num{1} & \num{430} & \num{13.87} \\
+        \num{3} & \num{1} & \num{0}   & \num{7.60}  & \num{1} & \num{900} & \num{29.03} \\
+        \num{4} & \num{2} & \num{90}  & \num{5.50}  & \num{2} & \num{45}  & \num{5.50}  \\
+        \num{5} & \num{1} & \num{291} & \num{5.52}  & \num{1} & \num{0}   & \num{13.87} \\
+        \num{6} & \num{2} & \num{62}  & \num{5.60}  & \num{2} & \num{0}   & \num{5.50}  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% We can use a MILP solver when we settle on the problem variables.
+% The problem is in the development stage, the requirements will change a lot and it is forbiddingly expensive to use this model continuously in this step.
+%Fundamentally, usually the compromise in optimality is acceptable to the industry setting and we do not gain that much from having the optimal solution that is \SIrange{10}{20}{\percent} better than the one found by the heuristic methods.
+
+\subsubsection{Comparison to related work}
+
+Comparison with related work, \cite{al2012strictly, pira2016line}, is not straightforward since there are differences in the models considered.
+Particularly, we consider more comprehensive distribution and communication constraints, and some sacrifices were taken to accommodate these differences.
+
+\Textcite{al2012strictly} randomly generate several cases with 4 modules and 40 partitions and evaluate the CPU time, reaching results between \SIrange{5}{50}{\minute} and averaging at \SI{27.4}{\minute}.
+Their methodology does not consider communication constraints, multiple windows, inclusion and domains constraints, but considers memory and exclusion constraints.
+Also, the scheduler is stopped after a given percentage of the estimated equilibria are visited.
+
+Since we are not able to replicate this stopping condition, we elect to use the same technique of stopping after a solution with evaluation function close to $\gls{alpha}_{best}$ is found.
+Given that this model is more loosely constricted, we choose to stop at $0.95\gls{alpha}_{best}$, and again it must be pointed out that the optimal value of the cases considered in these experiments is not known.
+
+Therefore, we generate \num{8} test cases as described in \textcite{al2012strictly}, however, we decide to decrease the average partition execution time from \SI{20}{\percent} of its respective period to \SI{5}{\percent}, otherwise the generated test cases are infeasible due to the processor usage fraction being too high.
+We run these cases with the Tabu-search algorithm, whose results are listed in table \ref{tab:compare-al}.
+
+\begin{table}[hbtp]
+    \centering
+    \caption{Results for problem instances based on \textcite{al2012strictly}.}
+    \label{tab:compare-al}
+    \begin{tabular}{ccc|ccc}
+        \toprule
+        Case & $\gls{alpha}_{best}$ & time to $0.95\gls{alpha}_{best}$ [\si{\minute}] & Case & $\gls{alpha}_{best}$ & time to $0.95\gls{alpha}_{best}$ [\si{\minute}] \\
+        \midrule
+        $4M40P$ & \num{2.00} & \num{9.97} & $4M40P$ & \num{2.54} & \num{13.36} \\
+        $4M40P$ & \num{2.00} & \num{5.78} & $4M40P$ & \num{1.29} & \num{23.67} \\
+        $4M40P$ & \num{1.72} & \num{9.83} & $4M40P$ & \num{1.42} & \num{8.34}  \\
+        $4M40P$ & \num{1.83} & \num{5.17} & $4M40P$ & \num{1.72} & \num{45.85} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Our results are similar, achieving almost identical minimum and maximum execution times, but we obtain a lower mean execution time of \SI{15.25}{\minute}.
+Despite the disputable stopping condition used in this comparison, we can conclude that our methodology is an improvement on previous work.
+
+Finally, \textcite{pira2016line} report results hundreds of times faster for their implementation that is also based on the best response heuristic, but this work does not consider any kind of distribution or communication constraints.
+
+\begin{comment}
+\section{Discussion}
+
+% This part should actually come in chapter 3 - definitely
+Many of the limitations of our approach stem from the communication model itself.
+In section \ref{sec:comms}, communications are defined based on flows of data, thus are modelled as chains of partition executions, however, for simplicity, these are restricted to two partitions only.
+The reason is this is the only way to have abstraction from which specific jobs are part of the respective chains, and as such no additional variables are required to model chains.
+This is specially true when the partition periods are not harmonic, for which we establish that the chain is executed in the minimum separation between jobs, although this is much more restrictive than it needs to be.
+However, we note that these cases should be sparse in real life cases, as non-harmonic periods are not common.
+Furthermore, this approach simply limits the time in between communication partitions, but does not actually schedule the underlying messages, nor check if the bandwidth is sufficient.
+A more detailed communications model would require each individual message to be specified in the problem description, and scheduled according to the specific bus technology.
+
+Another important aspect to consider is the performance of the best response algorithm.
+We found that this is by far the most powerful component of our scheduler, and all other algorithms are dependent on it.
+We must note that we experimented with direct solving the problem relying only on the generic algorithms, without employing any local search procedures.
+Specifically, we experimented with the genetic algorithm, \gls{sa}, and also \gls{aco}.
+However, none of these implementations was effective, and would fail to provide feasible solutions for even the easier test cases.
+The reason for this is the dimension of the search space, and the low ration of feasible to unfeasible solutions.
+As such, in our approach we intercalate each iteration of these algorithms with a local optimization with the best response algorithm.
+The benefit is it provides good solutions, even optimal ones, and is strictly improving, meaning it never deteriorates a current solution, and also it is quick from regions already close to an equilibrium point, thus it quickly applied to solutions that change only slightly.
+The downside is that we are too dependent on this algorithm, either by its limitation in tight cases, and the optimization criterion.
+This algorithm is extremely adapted to the alpha criterion and is not applicable to other optimization criteria, as would be easy to do with directly solving with generic algorithms.
+Finally, we give no proof that the described method is an approximation algorithm, and as such have no \textit{a posteriori} guarantee that the solutions are near optimal.
+
+Addressing the choice of generic optimization algorithms, we chose \gls{sa}, Tabu-search and a genetic algorithm because these meta-heuristics are well established for the field of combinatorial optimization, and have seen at least some application to scheduling problems.
+In recent years, many meta-heuristics have been proposed for solving combinatorial optimization problems, based on metaphors of some natural process, which spark interest in the field but do not contribute to better methods, as the description focuses on the metaphor rather than the underlying mechanics \cite{sorensen2015metaheuristics}.
+The point is the most relevant analysis is with respect to the operators and partial search procedures, and not the structure of the algorithm, as evidenced here by the similar performance of \gls{sa} and Tabu-search that share all the same operators.
+The most relevant conclusion is the discrepancy in effectiveness of the genetic algorithm, whose distinguishing trait is the crossover operator.
+Given that genetic algorithms are especially powerful for problems where the combination of two solutions (through the crossover operator) is valuable, it is evident that this meta-heuristic is not suitable for this problem.
+However, some differences in efficiency are observed between similar algorithms, hence there may be a meta-heuristic more suitable to this problem, although a complete study of all options is not the objective in this dissertation.
+
+Regarding the \gls{milp} approach, almost all commercial software for solving these problems use branch-and-bound or branch-and-cut algorithms, which are the most effective approaches for optimally solving NP-hard problems like this one.
+In short, these attempt to divide the overall problem into smaller integer linear programs and bounding their evaluation function, thus allowing entire branches to be skipped.
+Consequently, a large number of integer-valued variables drastically increases the number of branches and as such the solution time.
+In fact, in this problem all free variables are integer-valued, which explains the poor performance of this approach.
+However, a reasonable relaxation consists in allowing the offsets to be real numbers, which greatly reduces the solution time, and then a possible heuristic is to use the partition assignment from this solution as a required condition for the full program without this relaxation, as proposed in \textcite{al2012strictly}.
+
+\end{comment}
+
+
+\end{document}

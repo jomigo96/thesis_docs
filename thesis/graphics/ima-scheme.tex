@@ -1,0 +1,36 @@
+%\tikzstyle my grid=[style=help lines, color=blue!50, step=0.5, very thin, dashed]
+\begin{tikzpicture}
+	%\draw[style=my grid] (-1.5, -0.5) grid (10,9);
+
+	
+	\draw (7.5, 9) node {\large Federated Avionics};
+	\foreach \x in {0, 1, ..., 7} {
+        \pgfmathsetmacro\r{\x*2}
+		\pgfmathsetmacro\s{\r+1}
+        \pgfmathsetmacro\l{\r+0.5}
+        \draw[black!50!gray, thick, fill=hwgray] (\r,6) rectangle node[black] {HW} (\s,7);
+        \draw[black!50!gray, thick, fill=swred] (\r,7) rectangle node[black] {SW} (\s, 8);
+        \draw (\l, 6) -- (\l, 5.5);
+    }
+	\draw (16, 7) node {$\ldots$};
+    \draw[dashed, rounded corners] (0, 5) rectangle node {\textit{point-to-point links}} (15, 5.5);
+
+	
+	\draw (7.5, 3) node {\large Integrated Modular Avionics};
+	
+	\foreach \p in {3, 8} {
+        \foreach \x in {0, 1, 2, 3} {
+            \pgfmathsetmacro\l{\x+\p}
+            \pgfmathsetmacro\r{\x+\p+1}
+            \draw[black!50!gray, thick, fill=swred] (\l,1) rectangle node[black] {SW} (\r,2);
+        }
+        \pgfmathsetmacro\r{\p+4}
+        \pgfmathsetmacro\m{\p+2}
+        \draw[black!50!gray, thick, fill=hwgray] (\p, 0) rectangle node[black] {HW} (\r, 1);
+        \draw (\m, 0) -- (\m, -1);
+	}
+	\draw (13, 1) node {$\ldots$};
+	
+    \draw[dashed, rounded corners] (3, -1.5) rectangle node {\textit{shared bus}} (12, -1);
+	
+\end{tikzpicture}

@@ -1,0 +1,31 @@
+\begin{tikzpicture}[scale=1.0]
+	\draw[style=module_style_1] (0,2) rectangle (13, 4) node[below left, black, opacity=1.0] {\large $c_1$};
+	\draw[style=module_style_2] (0,0) rectangle (13, 2) node[below left, black, opacity=1.0] {\large $c_2$};
+
+    \draw[->, thick] (0,4) -- (13,4) node[above, yshift=0.1mm] {$t$};
+    \draw[->, thick] (0,0) -- (13,0) node[below, yshift=-0.1mm] {$t$};
+
+	\foreach \x in {0,...,13} {
+		\draw[color=gray, very thin, dashed] (\x, 0) -- ++(0, 5);
+	}
+
+    \pgfmathsetmacro\s{0.2}
+    \foreach \x in {0,...,12} {
+        \pgfmathsetmacro\y{4-\s/2}
+        \draw (\x, \y) --++(0, \s) node[above, fill=white] {\x};
+        \pgfmathsetmacro\y{\s/2}
+        \pgfmathtruncatemacro\l{\x+1}
+        \draw (\x, \y) --++(0, -\s) node[below, fill=white] {\l};
+    }
+
+	
+	\draw[gray, fill=colorA] (0, 2.75) rectangle node[black] {$p_1$} (2, 3.25);
+	
+	\draw[gray, fill=colorB] (3, 0.75) rectangle node[black] {$p_2$} (4, 1.25);
+	\draw[gray, fill=colorB] (9, 0.75) rectangle node[black] {$p_2$} (10, 1.25);
+	
+    \draw[->] (2,3) -- (2,2) -- node[above] {$τ_{1,2}$} (3,2);
+	\draw[->] (3,2) -- (3,1);
+	
+	\draw[<->] (0, 5) -- node[above] {$E_{1,2}$} ++(10, 0);
+\end{tikzpicture}

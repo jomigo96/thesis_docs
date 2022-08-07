@@ -1,0 +1,730 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\setcounter{chapter}{3}
+
+\begin{document}
+
+\chapter{Methodology}
+\label{sec:implementation} %implementation is the old chapter name
+
+This chapter describes the heuristic methods developed to solve the problem presented in chapter \ref{sec:problem}.
+As seen by the complexity of the \gls{milp} formulation in section \ref{sec:milp}, approaching the problem globally would be virtually infeasible, in the sense that solutions are not available in admissible time.
+Experimentation with solving this problem directly with generic optimization algorithms showed no promising results, therefore we opt to divide the problem into subproblems and provide specialized methods for solving these.
+The three subproblems are: assigning partitions to modules to verify the distribution constraints, performing local optimization on a single module, and performing global optimization, which are detailed in the following sections.
+
+\section{Partition assignment}
+\label{sec:constraint-programming}
+
+The partition assignment problem aims to distribute the partitions among the available modules in a way that verifies the distribution constraints.
+For a problem with $\gls{Np}$ partitions and $\gls{Nc}$ modules, there are $\gls{Nc}^{\gls{Np}}$ possible configurations.
+Even if we assume that most of these are valid, it is infeasible to analyse each of these and obtain a schedule on top of that.
+
+Following this, the first step is to find one viable assignment of partitions to modules, which essentially consists in assigning values to $\gls{f}_i,\ ∀\gls{p}_i∈\gls{P}$, such that an initial solution can be created.
+At the same time, tackling this reduced problem allows us to quickly prove infeasibility for certain problem instances without entering the additional complexity of considering the actual schedules.
+
+Two different methods are implemented for this subproblem: a constraint programming approach, and a sequential assignment similar to those used for the bin-packing problem.
+
+\subsection{Constraint programming}
+
+Constraint programming is a generic framework to solve combinatorial problems like this one, modelling as a \gls{csp}.
+
+The formulation as a \gls{csp} is straightforward from the \gls{milp} model, but here we rearrange it to use $\gls{f}$ nomenclature.
+The formulation is:
+\begin{description}
+	\item[Variables]: $\gls{f}_i,\ ∀\gls{p}_i\in\gls{P}$
+	\item[Domains]:  $\braces*{m},\ ∀\gls{c}_m\in\gls{D}_i$ 
+	\item[Constraints]:
+		\begin{alignat}{1}
+            \text{memory:}    \qquad & \forall m\sum_{i}\braces*{\gls{s}_i\cdot\gls{delta}\left( \gls{f}_i-m \right)} ≤ \gls{S}_m \label{eq:mem-csp-constraint} \\
+            \text{inclusion:} \qquad & \gls{f}_i=\gls{f}_j \label{eq:inc-csp-constraint} \\
+			\text{exclusion:} \qquad & \gls{f}_i≠\gls{f}_j \label{eq:exc-csp-constraint}
+		\end{alignat}
+\end{description}
+
+This problem can be solved using a general purpose \gls{csp} search algorithm.
+Algorithm \ref{alg:backtrack} is a recursive implementation of a backtracking search algorithm, where in each call a new variable is assigned a value in its domain.
+One advantage of \glspl{csp} is they are able to perform search using generalized heuristics not dependant on the problem structure.
+
+\begin{algorithm}
+    \input{data/backtracking-alg.tex}
+    \caption{Generic recursive backtracking search algorithm with forward checking, adapted from \cite{russell2016artificial}.}
+    \label{alg:backtrack}
+\end{algorithm}
+
+Another important characteristic of using backtracking search to solve this \gls{csp} is completeness, as we are able to prove infeasibility of the whole partition scheduling problem if the partition assignment subproblem is infeasible.
+Therefore, the first step in the scheduling tool will be to find a valid solution to this subproblem.
+
+\subsection{Sequential assignment}
+
+On approaches to similar scheduling problems, the hardware available is not defined, and the goal is to distribute partitions in a way that minimizes the required number of modules.
+This can be considered an instance of the bin-packing problem, common techniques for solving these include sequential assignment algorithms.
+In fact, \textcite{verschae2010scheduling} demonstrates that the simple \texttt{First-Fit} heuristic is a $2$-approximation algorithm, i.e. it produces a solution with at most twice the cost of the optimal one, also showing that no polynomial-time algorithm can do better.
+
+In this section we study a solution of the partition assignment subproblem using sequential algorithms.
+The differences in context are evident, notably that ours is a decision problem whereas these heuristics are aimed at an optimization problem, the existence of other kinds of constraints, and the fact that the modules (bins) are not identical.
+Additionally, bin-packing requires a measure of capacity.
+It would seem natural that memory be used as capacity, but for two reasons we choose to use the usage fraction instead, $\gls{U}$ from equation \ref{eq:usage-fraction}.
+The first is it makes every module similar in the sense of the bin-packing problem, as all have a limit usage fraction of $1$; the second is it being a valid indicator for feasibility for the following scheduling problem.
+
+Starting with \texttt{First-Fit}, the algorithm takes items in an arbitrary order, and assigns them sequentially to a bin, always choosing the first bin where it fits, and if the item does not fit in any, a new bin is opened. 
+In our context, the items are partitions and the bins are modules, and since there is a known number of modules defined, the algorithm fails if the partition does not fit in any.
+Additionally, by \textit{fitting}, it is meant that constraints \ref{eq:mem-csp-constraint} to \ref{eq:exc-csp-constraint} are verified, and the usage fraction is not exceeded.
+
+Another heuristic algorithm with similar behaviour is \texttt{Best-Fit}.
+Here, for each item, all bins where it fits are determined, and the item is assigned to the bin that is left with lowest capacity after this assignment.
+
+Other variations of these algorithms exist, however, since they are designed to minimize the number of bins, the solutions will naturally tend to pack more partitions in a few modules.
+For our optimization criterion, it is beneficial that the partitions are more evenly distributed among the hardware, which motivates a heuristic sequential assignment algorithm that takes this into account.
+We name it \texttt{Best-Fit-Inverse}, and similarly to \texttt{Best-Fit}, it determines all bins where it fits, but then chooses the one which is left with highest capacity after the assignment.
+This achieves our goal of favouring solutions with $\gls{U}_m$ being balanced among the modules.
+See algorithm \ref{alg:best-fit-inverse} for an implementation for this specific problem.
+
+Finally, the ordering which the partitions are assigned is significant in any of these algorithms.
+With experimentation, it is determined that ordering by number of constraints involved produces more consistent results.
+
+\begin{algorithm}
+    \input{data/best-fit-inverse-alg.tex}
+    \caption{\texttt{Best-Fit-Inverse} sequential assignment algorithm, applied to the partition distribution problem.}
+    \label{alg:best-fit-inverse}
+\end{algorithm}
+
+The preferred choice for solving the partition assignment subproblem is via a \gls{csp} solver, due to it being more robust for highly constricted cases, and able to prove infeasibility.
+The performance advantage of sequential assignment with \texttt{Best-Fit-Inverse} is negated by the fact that this step only needs to be carried out once. 
+Also, we empirically verify that the \gls{csp} approach is also able to produce a solution with balanced usage fractions if the variable domains are randomized, since algorithm \ref{alg:backtrack} selects values for assignment in the order they are provided.
+
+A note should be made that the \gls{milp} model presented in section \ref{sec:milp} can be simplified to solve this subproblem, and in fact it would become an \glsuseri{ip}.
+However, since this is a discrete combinatorial problem and optimization is not required, the \gls{csp} approach with its associated heuristics is superior.
+
+
+\section{Local optimization}
+\label{sec:local-op}
+
+Another subdivision of the overall problem is optimization of the schedule for one module.
+This procedure is done for a certain assignment of partitions to modules, and aims to find the optimal schedule for that configuration, which is why it is named local optimization.
+Until section \ref{sec:extending-chains}, we focus the description on instances without communication between modules or multiple windows.
+
+\subsection{\glsfmttext{csp} formulation}
+
+For the sake of completeness, we list the constraint satisfaction variant of the problem:
+\begin{description}
+    \item[Variables]: $\gls{t}_i,\ ∀\gls{p}_i\in\gls{Psub}_m$
+    \item[Domains]: $\braces*{0,1,\ldots,\gls{T}_i-\gls{e}_i}$
+    \item[Constraints]: 
+        \begin{alignat}{1}
+            \text{No-overlap}:\qquad & \gls{e}_i\leq\gls{l}_{i,j}\leq\gls{g}_{i,j}-\gls{e}_j,\ \forall\gls{p}_i,\gls{p}_j\in\gls{Psub}_m^2 \label{eq:over-csp-constraint} \\
+            \text{Chains}:    \qquad & \gls{E}_{i,j} \leq \gls{Eijmax},\ \gls{p}_i,\gls{p}_j\in\gls{Psub}_m \label{eq:chain-csp-constraint}
+        \end{alignat}
+\end{description}
+This has the advantage of having only binary constraints between variables, but the fact that the offsets take integer values upwards to the partition period makes the search space very large. 
+As such, this formulation serves no purpose.
+
+% This is clearly less complex than solving all at a time, and apart from communications constraints, once the partition assignment is made, the modules are actually independent.
+% include csp model, for completeness, discard split windows for now.
+% finding the optimal configuration of tasks is hard, but finding the best position for one task is manageable.
+% thus the best response algorithm is introduced
+
+\subsection{Best response algorithm}
+\label{sec:best-response}
+
+Optimizing the offsets for all partitions such that $\gls{alpha}$ is maximized is a complex problem.
+However, optimizing the offset of one partition in the schedule while taking the other partition offsets as fixed is feasible.
+The strategy is to iteratively update the offset of each partition to a better value, and due to the similarities with game theory, the procedure is called the best response algorithm.
+This solution was studied separately in \cite{al2012strictly, pira2016line}.
+
+Consider the partitions players in a game.
+The game is played in turns, each player updates its strategy knowing the current strategy for the other players, and the game is played until the strategies converge.
+In particular, each player chooses the offset that maximizes its utility (defined in equation \ref{eq:partition-utility}), which is the factor by which all executions can be multiplied without overlapping with its own execution window.
+Since partitions choose their offset independently, this game is categorically non-cooperative, and the optimal solution lies on an equilibrium point, which in game theory is known as a Nash Equilibrium Point, from \textcite{nash1951non}.
+However, a partition's utility maximizes not only the partition's window of execution, but also other partitions' interactions with its own, therefore, it has a cooperative trait.
+This is an important aspect that guarantees that, with a few nuances, this procedure converges to one of these equilibrium points, and additionally, this point will be at a local optimum with respect to the $\gls{alpha}$-parameter.
+The converse is also true, any local optimum solution will be an equilibrium point.
+
+Convergence is proved in the before-mentioned references for the simplest problem definition, without chains (equation \ref{eq:chain-csp-constraint}), and with extended domains ($\gls{t}_i$ can take values up to $\gls{T}_i$).
+This also requires that when choosing the best strategy, and if the player's previous strategy is equally good to the best one, then the player does not change its strategy.
+This prevents the game from entering loops, and speeds up convergence.
+
+In general, problem instances have many equilibrium points, which are all locally optimal solutions to the scheduling problem.
+Finding the optimal solution consists in finding the best of these equilibrium points, and is achieved by providing different starting points to the best response algorithm.
+
+The introduction of chains (with equation \ref{eq:chain-csp-constraint}) will simply restrict which offsets are valid. 
+This has the effect of speeding up convergence since it restricts the problem further, however, it also increases the number of equilibrium points, making the procedure more dependant on the initial state.
+
+\begin{algorithm}
+    \input{data/best-response-alg.tex}
+    \caption{Best response algorithm.}
+    \label{alg:best-response}
+\end{algorithm}
+
+Algorithm \ref{alg:best-response} lists the best response algorithm.
+A counter for the number of \textit{stable} partitions is kept, and is reset every time a partition changes its offset.
+Equilibrium is reached when no partition changes its offset, and this counter equals the number of partitions, terminating the algorithm.
+On line \ref{line:valid-offsets}, the domain is restricted in order to verify communications constraints, and on line \ref{line:best-value}, the partition determines the best offset in this domain. 
+Section \ref{sec:line} is entirely dedicated to procedures that determine this value.
+Partitions are cyclically visited, the \texttt{next()} operator on line \ref{line:next-partition} can be thought as getting the next element on a circular queue of partitions.
+
+The ordering by which partitions are cycled would seem to affect the solution, by favouring the first partition.
+However, we corroborate the findings in \cite{pira2016line} that no significant improvements in the solution process are found by introducing randomness in this ordering.
+In contrast, the randomness included in the initial state is the main factor that allows different solutions to be found.
+
+Figure \ref{fig:best-response-example} shows the progress of this algorithm for a particular case with no chains.
+In \ref{fig:best-response-example}a, an initial state is given, which does not need to be a valid solution, as seen by the overlap between partitions 1 and 3.
+The iteration order is $\gls{p}_2\rightarrow\gls{p}_3\rightarrow\gls{p}_1\rightarrow\gls{p}_2\ldots$, and for this starting state, any other ordering leads to a solution with the same $\gls{alpha}$-value.
+The first iteration (in \ref{fig:best-response-example}b) maximizes the utility of $\gls{p}_2$ by moving to $\gls{t}_2=7$, and this is dominated entirely by the relation with $\gls{p}_1$. 
+Notice that $\gls{t}_2=19$ would be an equally good move here, the selection between these is arbitrary.
+In \ref{fig:best-response-example}c, the utility of $\gls{p}_3$ is maximized, and again, the dominant relation is with $\gls{p}_1$.
+Finally, $\gls{p}_1$ does not change its offset in \ref{fig:best-response-example}d, as its current position is already maximizing its utility.
+Convergence is reached in this step, and in fact $\gls{p}_2$ and $\gls{p}_3$ are checked again before the procedure terminates, these steps were omitted from the figure.
+The final solution has $\gls{alpha}=7/3$, and is optimal.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{\input{graphics/best-response.tex}}
+    \caption{Progress of the best response algorithm.}
+    \label{fig:best-response-example}
+\end{figure}
+\subsection{Linear search}
+\label{sec:line}
+
+The \textproc{best\_value} procedure consists in finding $\gls{t}_i$ which maximize utility, by solving the following program:
+\begin{align}
+    \begin{aligned}
+        \text{max} \qquad &  \gls{alpha-i}_i\\
+        \text{s.t.} \qquad & \gls{alpha-i}_i \geq 0 \\
+        & \gls{alpha-i}_i\gls{e}_j \leq \mod\braces*{\gls{t}_i-\gls{t}_j,\ \gls{g}_{i,j}} \leq \gls{g}_{i,j}-\gls{alpha-i}_i\gls{e}_i,\; \forall \gls{p}_j\in\gls{Psub}_m\smallsetminus\braces*{\gls{p}_i} \\
+        & \gls{t}_i\in\gls{Tset}_i,
+    \end{aligned}
+\end{align}
+with $\gls{Tset}_i\equiv\left[0,1,\ldots,\gls{T}_i-\gls{e}_i\right]$ being the valid offsets to consider.
+This is trivially solved by computing $\gls{alpha-i}_i$ for all possible values of $\gls{t}_i$ and choosing the best one.
+However, this procedure will be repeated many times inside the local and global search procedures, therefore a faster method is paramount.
+An efficient method is based on linear programming, and the previous program is in fact a linear program if we relax the offset to be a real number: $0\leq\gls{t}_i\leq\gls{T}_i-\gls{e}_i$.
+
+First, we look into the structure of the solution. 
+Considering only a pair of constraints, we have the line $\gls{alpha-i}_i=\mod\braces*{\gls{t}_j-\gls{t}_i,\ \gls{g}_{i,j}}/\gls{e}_i$, which is discontinuous at its zeros, $\gls{t}_i=\gls{t}_j+\gls{g}_{i,j}n,\ n\in\mathbb{Z}$, but strictly decreasing in other regions. 
+Likewise for the other part of the same constraint, we have the line $\gls{alpha-i}_i=\mod\braces*{\gls{t}_i-\gls{t}_j,\ \gls{g}_{i,j}}/\gls{e}_j$ that is strictly increasing but discontinuous at the same zeros (from the property $\mod\braces*{-a,b}=b-\mod\braces{a,b}$).
+The overall value of $\gls{alpha-i}_i$ will then lie in the minimum of these two lines, as seen in figure \ref{fig:solution-set-a}, and with multiple partitions, the solution will be the minimum of all these lines, as seen in figure \ref{fig:solution-set-b}.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.9\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/solution-2p.tex}}
+        \caption{Solution set with one other partition}
+        \label{fig:solution-set-a}
+    \end{subfigure}%
+
+    \vspace{8mm}
+    \begin{subfigure}{0.9\linewidth}
+        \centering
+        \resizebox{\linewidth}{!}{\input{graphics/solution-6p.tex}}
+        \caption{Solution set with five other partitions.}
+        \label{fig:solution-set-b}
+    \end{subfigure}%
+    \caption{Structure of the \textproc{best\_value} solution set, adapted from \cite{pira2016line}.}
+    \label{fig:solution-set}
+\end{figure}
+
+The solution set is composed of adjacent polyhedra, separated by zeros of the utility.
+Moreover, an important property in the solution set is that inside each polyhedron, the utility is strictly increasing until the local maximum, then strictly decreasing until the next zero.
+This in turn guarantees that every local maxima, including the global maximum, lie at the intersection of an ascending line and a descenting line.
+The solution to this problem, as proposed in \textcite{al2012strictly}, is to determine the subset of intersection points $\gls{Iset}_i\subset\gls{Tset}_i$, and compute the utility only for these points.
+
+The intersection points can be determined for each polyhedron.
+Locally, the constraint $\mod\braces{\gls{t}_i-\gls{t}_j,\gls{g}_{i,j}}≥\gls{alpha-i}_i\gls{e}_j$ is bounded by an increasing line, of the form $\gls{t}_i-o_j^{inc}=\gls{e}_j\gls{alpha-i}_i$.
+Given a reference offset $t_i^{ref}$ in the polyhedron, the value of $o_{j}^{inc}$ is given as:
+\begin{align}
+    o_j^{inc} = t_i^{ref}-\mod\braces*{t_i^{ref}-\gls{t}_j,\gls{g}_{i,j}}.
+    \label{eq:increasing-line}
+\end{align}
+Identically, the decreasing line is $\gls{t}_k-o_k^{dec}\geq\gls{alpha-i}_i\gls{e}_i$, with $o_k^{dec}=o_k^{inc}+\gls{g}_{i,k}$.
+Proof of \ref{eq:increasing-line} is derived from modulo properties, see \textcite{pira2016line} for details.
+With this, the intersection point between these two lines is:
+\begin{align}
+    \hat{t} = \frac{\gls{e}_j o_k^{dec} + \gls{e}_{i} o_{j}^{inc}}{\gls{e}_j+\gls{e}_i},
+\end{align}
+with $\gls{p}_j,\gls{p}_k\in\gls{Psub}_m\smallsetminus\braces*{\gls{p}_i}$, possibly having $j=k$.
+The intersection point is in general a rational number, therefore for each $\hat{t}$, the points $\ceil{\hat{t}}$ and $\floor{\hat{t}}$ must be added to $\gls{Iset}_i$.
+In order not to check repeated polyhedra, the reference offset $t_i^{ref}$ can be taken at the zeros of the utility, which are located at $\gls{t}_j+n\gls{g}_{i,j},\forall n\in\mathbb{Z},\forall j\neq i$.
+
+Other methods exist that allow to skip some polyhedra after a lower bound for the utility is found, using line search \cite{pira2016line}, and performance is superior to the method described above.
+To the best of my knowledge, these methods cannot be applied with communication constraints so they were not investigated.
+Another simple method that improves the simple solution of checking every possible offset consists in checking offsets only while the utility increases, and jump to the next zero when it starts to decrease, taking advantage of the structure of the problem.
+
+The actual calculation of the utility is done in $\bigO(\gls{Np})$ time (see equation \ref{eq:partition-utility}), therefore both exhaustive search and its improved version run in $\bigO(\gls{Np}\gls{T}_i)$.
+For the method based on intersection points, we first note that for $N$ constraining partitions, there will be $N^2$ intersection points in each polyhedron, with the number of polyhedra being trivially bounded by $\gls{T}_i$, so actually this algorithm runs in $\bigO(\gls{T}_i\gls{Np}^3)$.
+Despite this asymptotic time complexity being clearly worse, for usual problem instances with limited $\gls{Np}$, we verify that this version is superior to exhaustive search, as will be seen in chapter \ref{sec:results}.
+
+On the implementation level, the utility at each intersection point can be computed directly with the intersection point, or the set of intersection points can be stored in memory and the utility calculated afterwards.
+The benefit of the latter is that we can avoid inspecting the utility at repeated intersection points, at the cost of using more memory.
+Experimentation showed that the former approach is superior.
+
+\subsection{Extending the search with chains}
+\label{sec:extending-chains}
+
+For chains, different approaches are possible, the most general is, for each partition, to consider all chains that affect it, which will possibly depend on partitions in modules other than the one we try to optimize. 
+This is the approach followed here, and we maintain the same goal that is computing the offset that yields maximum utility, considering all other variables fixed.
+
+As with the \gls{csp} approach, communication constraints do not affect the utility of a partition or the $\gls{alpha}$-parameter of the whole schedule, their effect simply restricts the problem by forbidding certain invalid offsets.
+Equation \ref{eq:chain-feasibility} is the important one here, restricting $\gls{Tset}_i$ to a series of feasible intervals, as seen in figure \ref{fig:utility-chains}.
+The number of these intervals depends on the periods of the partitions involved in the chain. 
+In the figure, two intervals are seen because in this example the chain is done with a partition with period $\gls{T}_j=\gls{T}_i/2$.
+
+Clearly, only the intersection points that belong to the feasible region need to be considered, but in addition to these, the boundary points in each segment become interest points.
+This includes the boundary points of $\gls{Tset}_i$, $\braces{0,\gls{T}_i-\gls{e}_i}$.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.9\linewidth}{!}{\input{graphics/solution-points.tex}}
+    \caption{Feasible region (red) constrained by one chain, with all interest points (blue).}
+    \label{fig:utility-chains}
+\end{figure}
+
+Computing these feasible regions is not straightforward because different cases apply when the delay allows for delaying one period.
+The easiest case is with harmonic partition periods and when delaying a period never happens, for which the feasible region consists in all intervals:
+\begin{align}
+    \left[ a+k\gls{g}_{i,j},\,b+k\gls{g}_{i,j} \right],\;k\in\mathbb{Z}.
+    \label{eq:feasible-region}
+\end{align}
+The values $a$, $b$ depend on whether $\gls{p}_i$ is the sender or the receiver in the chain:
+\begin{align}
+    \gls{p}_i\rightarrow\gls{p}_j&:\qquad\left\{
+    \begin{aligned}
+        a &= \gls{t}_j+\gls{e}_j-\gls{Eijmax} \\
+        b &= \gls{t}_j-\gls{tau-hat}_{i,j}-\gls{e}_i
+    \end{aligned}\right. \\
+    \gls{p}_j\rightarrow\gls{p}_i&:\qquad\left\{
+    \begin{aligned}
+        a &= \gls{t}_j+\gls{tau-hat}_{j,i}+\gls{e}_i \\
+        b &= \gls{t}_j-\gls{e}_i+\glsuseri{Eijmax}
+    \end{aligned}\right. .
+\end{align}
+\begin{proof}
+    We consider the case where the chain is processed as $\gls{p}_i\rightarrow\gls{p}_j$ and $\gls{t}_j$ being fixed, with the other case having an identical derivation.
+    The first branch in equation \ref{eq:chain-feasibility} is linearised as:
+    \begin{gather}
+        \gls{t}_j-\gls{t}_i-\gls{q}\gls{g}_{i,j}+\gls{e}_j≤\gls{Eijmax},
+    \end{gather}
+    which yields an upper bound on $\gls{t}_i$:
+    \begin{gather}
+        \gls{t}_i ≥ \gls{t}_j-\gls{q}\gls{g}_{i,j}-\gls{Eijmax}+\gls{e}_j.
+    \end{gather}
+    Identically, the constraint that prevents a chain from being delayed one period is:
+    \begin{gather}
+        \gls{l}_{i,j}-\gls{e}_{i} \geq \gls{tau-hat}_{i,j},
+    \end{gather}
+    is linearised as:
+    \begin{gather}
+        \gls{t}_i \leq \gls{t}_j-\gls{q}\gls{g}_{i,j}-\gls{tau-hat}_{i,j}-\gls{e}_i.
+    \end{gather}
+    The interval becomes:
+    \begin{gather}
+        \left[ \gls{t}_j+\gls{e}_j-\gls{Eijmax}-\gls{q}\gls{g}_{i,j},\,\gls{t}_j-\gls{tau-hat}_{i,}-\gls{e}_i-\gls{q}\gls{g}_{i,j} \right].
+    \end{gather}
+    It was seen in section \ref{sec:comms} for the specific case of harmonic periods that the chain is repeated with a period equal to the greatest period among the two partitions, or equivalently, $\gls{g}_{i,j}$.
+    Therefore, the previous interval can be shifted by $\gls{g}_{i,j}$ units as necessary, yielding:
+    \begin{gather}
+        \left[ \gls{t}_j+\gls{e}_j-\gls{Eijmax}+(k-\gls{q})\gls{g}_{i,j},\,\gls{t}_j-\gls{tau-hat}_{i,}-\gls{e}_i+(k-\gls{q})\gls{g}_{i,j} \right],\;∀k∈\mathbb{Z}.
+    \end{gather}
+    Finally, $\gls{q}$ can be removed since it is an integer value by definition, leaving an equivalent to expression \ref{eq:feasible-region}.
+\end{proof}
+
+The limits of these intervals in expression \ref{eq:feasible-region} become interest points that possibly result in a local maximum of the utility.
+Evidently, each partition is not restricted to be involved in only one chain, and in fact all of them can be considered at this step.
+If this is the case, all regions from expression \ref{eq:feasible-region} should be intersected, and the interest points are the boundary points of the resulting region, plus the intersection points, $\gls{Iset}_i$, determined in section \ref{sec:line} that are contained in this region.
+
+\todo[inline, disable]{For non-harmonic periods, some intervals in expression \ref{eq:feasible-region} intersect, and the feasible region is the symmetric difference of these. This was seen experimentally, cannot really explain why.}
+
+To reiterate, chains do not need to be considered for local optimization, although this is favourable in order to find a solution faster.
+Introducing chains restricts the search space and thus speeds the computation of the best offset, and it also promotes partitions to stick together faster, which speeds the convergence of the best response algorithm.
+However, this also leads to more equilibrium points, hence more restarts are required to find the optimal solution with this procedure when compared to not including chains.
+Also, issues arise in tightly constricted problems when there are no viable offsets for a partition, as will be discussed in section \ref{sec:limitations}.
+Here it would make sense to either keep the current offset in order to promote convergence, or alternatively, select the best offset with respect to the $\gls{alpha}$-parameter regardless of the constraining chains.
+Empirically, we found better results for the latter option, which can be explained by it allowing the solution to escape the current bad region, and also improving the utility for other partitions in the module.
+
+\subsection{Extending the search with multiple windows}
+
+The best response procedure is also able to optimize a module's schedule with multiple partition windows per job when using the more complex form of utility, from equation \ref{eq:utility-chunks}.
+However, this function does not share the same properties as the simpler version which allowed for efficient computation of the best offset.
+In particular, being defined by branches, the function is not continuous, and loses the interesting polyhedron-shape of the curves shown in figures \ref{fig:solution-set} and \ref{fig:utility-chains}, thus the linear programming approach discussed in section \ref{sec:line} is no longer applicable.
+For this reason, the best value calculation is done exhaustively for every offset when any of the partitions in the module has multiple windows of execution per job.
+\todo[inline, disable]{the function is defined for integer offsets, continuous is not mathematically accurate}
+
+At the level of the best response procedure, the approach is to consider all windows independent players, but similarly to chains, some strategies will be tightly constrained by strategies of other players because we want to maintain the ordering of windows and respect the maximum response time.
+The exception is the first window at each job; seeing that the offsets for these are all strictly related (by the partition period), it makes sense to consider them a single player.
+For the purpose of computing the utility, the worst among the $\gls{K}_i$ jobs is counted.  
+As for the ordering, there is no theoretical or empirical reason to enforce a particular playing order.
+For simplicity of implementation, we define that all windows for the same partition play in chronological order.
+
+The more inefficient calculation of the best offset compared to the case with simple partitions is combatted by the restricted domains due to window ordering and response times.
+Window ordering is represented by having:
+\begin{subequations}
+\begin{align}
+    &\gls{tch}_{i,k,u}<\gls{tch}_{i,k,u+1} \\
+    &\gls{tch}_{i,k,\gls{M}_{i,k}}<\gls{tch}_{i,k+1,1}, \label{eq:to-next-job}
+\end{align}
+\end{subequations}
+so when determining the best offset for $\gls{ch}_{i,k,u}$, $u>1$, it is possible to restrict the calculation to offsets:
+\begin{align}
+    \left[ \gls{tch}_{i,k,u-1},\,\gls{tch}_{i,k,u+1} \right].
+\end{align}
+Additionally, the maximum response time is limited to $\gls{d}_i$, so we can further restrict the offsets for all windows $u>1$ to guarantee that the following ones can all be placed in the remaining time:
+\begin{align}
+    \gls{tch}_{i,k,u} \leq \gls{tch}_{i,k,1}+\gls{d}_i-\sum_{v=u}^{\gls{M}_{i,k}}\braces*{\gls{ech}_{i,k,v}+\gls{eps}_m}.
+\end{align}
+In fact, since $\gls{d}_i\leq\gls{T}_i$ and $\gls{tch}_{i,k+1,1}=\gls{tch}_{i,k,1}+\gls{T}_i$, inequality \ref{eq:to-next-job} is redundant.
+
+Convergence of the best response algorithm for the restricted problem has been formally proven \cite{al2012strictly}.
+For the extended model presented here, it was experimentally verified that about \SI{6}{\percent} of randomly generated cases do not converge.
+We cope with this by discouraging changing the offsets as the best response algorithm progresses.
+A threshold is introduced after a few iterations, and players only change their strategy if the gain in utility is greater than this threshold.
+However, the equilibrium solution might not be at a local optimum anymore, although the penalty in terms of the $\gls{alpha}$-parameter should be minimal.
+
+Algorithm \ref{alg:best-response-chunks} lists these modifications to the best response algorithm (algorithm \ref{alg:best-response}), but it should be viewed as an alternative to be used when needed rather than a generalization of \ref{alg:best-response}, as it is clearly less efficient when the simpler one applies. 
+
+\begin{algorithm}
+    \input{data/best-response-chunks.tex}
+    \caption{Adapted best response algorithm.}
+    \label{alg:best-response-chunks}
+\end{algorithm}
+
+\subsection{Parallel best response}
+\label{sec:parallel}
+
+Parallel best response is the procedure of applying local optimization to several modules simultaneously, an important component in our methodology for global optimization.
+Since it is based on the best response algorithm, we describe it now.
+
+The previous description of the effects of chains in the best response algorithm focused on restricting the offsets a partition could select at each iteration.
+However, it is fair to say that when a chain is performed across two modules, then their respective schedules are not independent, hence performing local optimization independently for these does not, in general, result in an overall local optimum.
+The alternative approach which we explore here is to optimize the modules connected by chains in parallel, which means we take all partitions scheduled in those modules as our set of players, and apply the best response algorithm to this set.
+
+Fundamentally, the best response algorithm is unchanged, the only nuance here is for computing the best offset (and therefore the utilities), only the partitions scheduled in the same module are considered, but the viable offsets are restricted by all partitions in the set.
+It was noted before that the best response algorithm has worst-case complexity that is exponential with the number of players, which seems a deterrent towards this strategy, however, this complexity arrives from having to verify the strategy against every other player, which is not the case here.
+In fact, players on separate modules do not influence each other's strategies, they just restrict which strategies are even possible, which is no different from solving the modules independently.
+
+That is not to say the performance is unaffected, just not as critically as it may be apparent.
+When some modules schedules converge faster than others, we are still checking every best strategy on the converged players at every cycle around the players, which represents wasted computations.
+Additionally, there is an extra step needed, determining which modules need to be optimized in parallel and which can be optimized independently.
+If we form an undirected graph where the modules are vertices and any chain creates an edge between the modules where the partitions are assigned to, then this problem consists in enumerating all unconnected subgraphs, easily solved by either breadth-first or depth-first search.
+This is solvable in linear time since each node only needs to be visited once.
+In figure \ref{fig:parallel-modules} we see an example of this, where modules $\gls{c}_2, \gls{c}_3, \gls{c}_4$ form an unconnected subgraph and thus should be scheduled in parallel, while module $\gls{c}_1$ can be scheduled independently.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.7\linewidth}{!}{\input{graphics/parallel-squeme.tex}}
+    \caption{Modules scheduled in parallel due to chains, represented as arrows.}
+    \label{fig:parallel-modules}
+\end{figure}
+
+Of course, in general, we can just optimize all modules in the system in parallel and skip the unconnected subgraph problem, especially considering that often in problems with many chains there are no unconnected subgraphs.
+However, the gains in performance by decreasing the number of players in the best response algorithm are appealing, so the previous solution was implemented.
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+Performance of the best response algorithm is evaluated in chapter \ref{sec:results}.
+Here we identify some conceptual limitations of this heuristic.
+Firstly, the non-cooperative nature leads to deadlocks, cases where partitions do not have a good option to move when considered individually, but one with an easy solution if the problem were considered globally. 
+A simple example of this idea is shown in figure \ref{fig:packed-issue}.
+If using the utility given by equation \ref{eq:partition-utility}, one can see that none of these partitions have an option to improve it, so the best response procedure \textit{converges} immediately for the current non-feasible solution, even though a valid solution is trivial.
+This issue escalates for similarly tightly packed cases ($\gls{U}\approx 1$), and this algorithm can only solve these cases starting from already good starting points. 
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{!}{1.7cm}{\input{graphics/tight-case.tex}}
+    \caption{Special case where the best response algorithm fails.}
+    \label{fig:packed-issue}
+\end{figure}
+
+Other deadlocks happen due to chains with tight delays.
+When partitions are involved in tight chain delays, it can happen than only a few offsets are feasible, and the partitions will not be able to leave this region.
+For instance, consider the extreme case where only one offset satisfies a certain chain, then, the partition is assigned this offset and will be \textit{locked} there.
+We can move the two partitions together, but not one individually as required by the best response procedure.
+
+Another limitation comes from the complexity of the problem when there are multiple windows of execution, since for this heuristic, each window is considered a different player altogether.
+The worst-case complexity of the standard best response algorithm is known to be $\bigO(NA^{N-1})$, with $N$ being the number of players and $A$ the number of strategies per player \cite{durand2016complexity}, evidencing that the performance is especially sensitive to the number of players.
+
+\section{Global optimization}
+\label{sec:global}
+
+Local optimization allows us to efficiently generate schedules for a single module after having defined the partitions that are assigned to this module as well as their configuration with respect to windows.
+In fact, the optimal schedule for each module is within reach of the local optimization procedure, given sufficient restarts from different starting configurations.
+Therefore, the remaining task is finding the partition assignment and window configuration that enables us to find an optimized solution to the overall problem.
+A viable distribution of partitions among modules can be found via methods described in section \ref{sec:constraint-programming}; furthermore the number of viable configurations can be as high as $\gls{Nc}^{\gls{Np}}$ with no distribution constraints, so the goal in this section is to develop a strategy to explore a relevant portion of the search space.
+
+The best response algorithm has been used to not only select the best offset, but also the best module for each partition \cite{al2012strictly, pira2016line}.
+Generating initial states becomes more troublesome as a random assignment of partitions to modules in general will not produce a feasible assignment, and the \gls{csp} procedure from section \ref{sec:constraint-programming} would need to applied at each restart.
+Also, the algorithm would not be applied to a single module but to the whole system, and as seen before, the complexity is exponential with the number of partitions.
+The present work decides to investigate a different solution, the main reason being that we consider more comprehensive distribution constraints, which would lead to different kinds of deadlocks in the best response algorithm.
+
+The followed strategy is based on stochastic optimization algorithms, in particular \gls{sa}, Tabu-search and a genetic (or evolutionary) algorithm.
+These are of course classified as local search algorithms, but the fact that we are applying them only to a subtask in our problem, namely exploring starting points for a dedicated local optimization procedure, makes it adequate to use them for global search.
+These algorithms operate on a complete solution and gradually improve it, and this allows for the usage of the modularity of the local optimization procedure to improve only the needed modules.
+Another reason for this choice is we lack a proper way to evaluate partial solutions, that is, not all problem variables being assigned a value, which means a constructive algorithm is not appropriate.
+
+A set of operators are defined which navigate the search space, and a set of rules (meta-heuristics) for applying them are described in this section.
+The algorithms themselves are very similar, and have been implemented on a wide range of well known problems, so only the key differences and implementation details are described here; the full pseudo-code is included in appendix \ref{an:algs}.
+
+
+\subsection{Evaluation function}
+
+The evaluation function of a solution is the metric we try to optimize, which naturally corresponds to the $\gls{alpha}$-parameter.
+However, the problem representation allows for invalid states, and the $\gls{alpha}$-parameter does not account for unmet distribution constraints in its definition.
+For usage with the global optimization algorithms which can spontaneously generate infeasible solutions from a feasible one, it is necessary to penalize the infeasible solutions with a more generic evaluation function.
+We represent this by $\gls{ev}(\gls{St})$, where $\gls{St}$ is the state (or solution), and define it here as follows:
+\begin{align}
+    \gls{ev}(\gls{St}) =
+    \begin{cases}
+        \gls{alpha},               & n_c = 0\\
+        \frac{\gls{alpha}}{n_c+1}, & \gls{alpha}<1\land n_c>0 \\
+        \frac{1}{n_c+1},           & \text{otherwise},
+    \end{cases}
+\end{align}
+where $n_c$ is the total number of unmet constraints.
+
+This definition allows us to maintain the property of having a valid solution when $\gls{alpha}≥1$, which is now $\gls{ev}(\gls{St})≥1$.
+Additionally, we also know that for $0.5≤\gls{ev}(\gls{St})<1$, we have all constraints (except for no execution overlap) satisfied.
+
+\subsection{Operators}
+\label{sec:operators}
+
+A state is a possible solution to the problem, and consists of a complete assignment of the problem variables: offsets, partition assignment to modules, and partition windows.
+Note that on other problems or fields a state does not need to be complete, i.e., not all variables need to be assigned, but throughout our implementation we only deal with complete assignments thus we keep this definition of state.
+States have neighbourhoods, a number of other states that differ to the current one by only a few variables, and the process of moving to another state in the neighbourhood is called an operation.
+
+The operators apply to states and produce a new state, as $op(\gls{St}_1)→\gls{St}_2$.
+Six operators are defined and detailed below: the move operator, $\gls{mov}(\gls{St}, \gls{gr}, m, n)$, the swap operator, $\gls{sw}(\gls{St}, \gls{gr}_1, \gls{gr}_2, m, n)$, the shuffle operator, $\gls{sh}(\gls{St}, m)$, the local optimization operator, $\gls{lop}(\gls{St}, \gls{mgr})$, the slice operator, $\gls{sl}(\gls{St}, i)$, and the crossover operator, $\gls{cross}(\gls{St}_1,\gls{St}_2)$, which is the only binary operator and combines two states to produce a new one.
+
+These operators may change both the offsets and the assignments to modules, and without special consideration, it is possible to obtain a state which does not respect the distribution constraints from a state that does.
+A reduction in the dimension of the search space is thus achievable by restricting that the partition distribution always remains valid with respect to the distribution constraints when applying an operator, which essentially means we are only navigating valid solutions.
+In practice, this will apply to $\gls{mov}$ and $\gls{sw}$, which change the partition assignments, while for $\gls{cross}$ this is in general unavoidable.
+The disadvantage is this can lead to deadlocks if the distribution constraints are tight, where another valid solution cannot be reached from a given state by applying only one of these operators.
+Henceforth we refer to the operators as \textit{coherent} if they require the distribution constraints to remain valid.
+
+\subsubsection{Operator $\glsfmttext{mov}$}
+
+The move operator changes the assignment of a group of partitions, $\gls{gr}⊆\gls{P}$, essentially moving from one module to the other.
+The definition below uses the assignment notation from section \ref{sec:constraint-programming}:
+\begin{alignat*}{3}
+    &\gls{mov}(\gls{St}_1, \gls{gr}, m, n)→\gls{St}_2 &&&& \\
+    &\text{Precondition:}  & ∀\gls{p}_i∈\gls{gr},\ \gls{f}_i=m,&&\qquad&\text{in } \gls{St}_1 \\
+    &\text{Effects:}       & \gls{f}_i=n,&&&\text{in } \gls{St}_2.
+\end{alignat*}
+A few heuristics are possible.
+Firstly, the $\gls{alpha}$ optimization goal is the minimum among the available modules, thus a move is more likely to improve a solution if it relieves this module, i.e. selecting $m$ as this module.
+Also, if the operation must be coherent, all partitions that share an include constraint should be moved in the same operation.
+Other than that, the arguments can be chosen at random, but there is a nuance depending on whether we select a module from $\gls{C}$ at random and then a partition assigned to it, or if we just select a partition at random from $\gls{P}$ and take its assignee module as well.
+The advantage of the latter approach is the assignee modules are more likely to be the modules hosting more partitions, hence these moves will normally lead to more uniform distributions of partitions among modules, which is generally desirable.
+%This process is analogous to the evolution of a thermodynamic system with increasing entropy.
+
+\subsubsection{Operator $\glsfmttext{sw}$}
+
+The swap operator swaps the assignment of two partitions, or two groups of partitions, virtually chaining two move operators:
+\begin{alignat*}{3}
+    &\gls{sw}(\gls{St}_1, \gls{gr}_1, \gls{gr}_2, m, n)→\gls{St}_2 &&&& \\
+    &\text{Preconditions:}  & ∀\gls{p}_i∈\gls{gr}_1,\ \gls{f}_i=m,&&\qquad&\text{in } \gls{St}_1 \\
+    &                       & ∀\gls{p}_j∈\gls{gr}_2,\ \gls{f}_j=n,&&&\text{in } \gls{St}_1 \\
+    &\text{Effects:}        & \gls{f}_i=n,\ \gls{f}_j=m,&&&\text{in } \gls{St}_2 \\
+\end{alignat*}
+This operator is useful for reaching certain states without passing through worse intermediary states, having either low $\gls{alpha}$ or just invalid distribution constraints, and also when we mean to keep all operations coherent, since it is applicable even in situations with tight distribution constraints.
+For instance, it can be directly applied to partitions that are in exclusion, or between modules that are near their memory limits, both cases where a move operator would not be coherent.
+Just as with the move operator, partitions that share an includes constraint must be moved as a group if the operator must be coherent.
+
+\subsubsection{Operator $\glsfmttext{sh}$}
+
+The shuffle operator provides a new start point for the local optimization procedure, by assigning random offsets to all partitions and all partition windows assigned to a certain module:
+\begin{alignat*}{3}
+    &\gls{sh}(\gls{St}_1, m)→\gls{St}_2 &&&& \\
+    &\text{Preconditions:}  & &&& \\
+    &\text{Effects:}        & ∀\gls{p}_i∈\gls{Psub}_m,∀\gls{ch}_a∈\gls{chset}_i:\,\gls{tch}_a=\textit{random}&&\qquad&\text{in }\gls{St}_2.
+\end{alignat*}
+This random selection is wrapped to the possible values following equation \ref{eq:fit-in-maf}, which in general do not contemplate communication constraints.
+
+\subsubsection{Operator $\glsfmttext{lop}$}
+
+The local optimization operator is applicable to a group of modules, $\gls{mgr}⊆\gls{C}$, as described in section \ref{sec:parallel}, or a single module as described in section \ref{sec:local-op}.
+\begin{alignat*}{2}
+    &\gls{lop}(\gls{St}_1, \gls{mgr})→\gls{St}_2 && \\
+    &\text{Preconditions:}  & & \\
+    &\text{Effects:}        & \text{Modules $\gls{c}_m∈\gls{mgr}$ in a local optimum in }\gls{St}_2.&
+\end{alignat*}
+
+\subsubsection{Operator $\glsfmttext{sl}$}
+
+The slice operator changes the window configuration of a partition.
+\begin{alignat*}{3}
+    &\gls{sh}(\gls{St}_1, i)→\gls{St}_2 &&&& \\
+    &\text{Preconditions:}\qquad  & \gls{B}_i≠∅ &&& \\
+    &\text{Effects:}        & \gls{chset}_i=\textit{select},&&\qquad&\text{in }\gls{St}_2.
+\end{alignat*}
+Here, \textit{select} is the procedure of creating windows from a set of available preemption points, $\gls{B}_i$, as is exemplified in section \ref{sec:splitting}.
+This is done randomly, but heuristically we can prefer the single window configuration more often when the execution is already sliced.
+Even though this configuration does not necessarily lead to an optimal result, it is important to decrease complexity.
+%Also, when all partition periods are harmonic, the window configuration can be the same for every job.
+
+Applying this operator can also follow heuristic rules, favouring partitions with larger executions, or partitions assigned to the module with smallest $\gls{alpha}$.
+
+% Nuance, adding or duplicating jobs on moves to modules with a different major frame.
+
+\subsubsection{Operator $\glsfmttext{cross}$}
+
+The crossover operator is a binary operator specific to the genetic algorithm that combines two states into one.
+It relies on a gene-based representation of the problem variables, and generally a new solution is made by combining at random some genes from one parent and some from the other.
+Alternatively, there are \textquote{blend crossover} operators that assign new values to genes, in between the values of those genes from the originating states, especially used for real-valued variables \cite{eshelman1993real}.
+
+For this specific problem, the only viable gene representation considers tuples $(\gls{f}_i, \gls{t}_i)$ for each partition, representing the module and the offset, respectively. 
+Essentially, we combine a subset of partitions from one state with the remaining from the other state:
+\begin{alignat*}{2}
+    &\gls{cross}(\gls{St}_1,\gls{St}_2)→\gls{St}_3 && \\
+    &\text{Preconditions:} \qquad&&\gls{gr}_1∪\gls{gr}_2=\gls{P},\ \gls{gr}_1∩\gls{gr}_2=∅ \\
+    &\text{Effects:}&& ∀\gls{p}_i∈\gls{gr}_j:\ (\gls{f}_i,\gls{t}_i)\textit{ in }\gls{S}_3=(\gls{f}_i,\gls{t}_i)\textit{ from }\gls{S}_j,\ j=1,2.
+\end{alignat*}
+In general, this operator is \textit{incoherent}, and we can expect all modules to be affected.
+In order to use the strengths of genetic algorithms, the genes should represent good solution characteristics with some modularity, such that they can be transmitted to new solutions, and be gradually improved. 
+In this regard, the chosen representation is flawed, as the optimization criteria fundamentally evaluates groups of partitions. 
+To gain some value from the crossover operator, we can favour in the selection of $\gls{gr}_1,\gls{gr}_2$ that partition pairs constrained by chains are present in the same group.
+Another option which would benefit our optimization criterion would be to define genes from modules and the partitions assigned to them.
+However, this is not feasible since in the created solution some partitions can be missing or appear duplicated.
+
+Also note that this operator has no effect when applied to two identical solutions.
+
+\subsubsection{Operator selection}
+
+The main idea is to apply one of the operators $\gls{mov}$, $\gls{sw}$, $\gls{sh}$, $\gls{sl}$, $\gls{cross}$ at each iteration, followed by $\gls{lop}$ only on the modules which were affected.
+The overlying meta-heuristic algorithm is responsible for choosing which operators are used, to which variables, and also whether or not to accept the resulting solution.
+The operator selection is done mostly randomly as is characteristic of the class of algorithms used, but the heuristics described for each operator affect the selection.
+Essentially, the operator is chosen according to a fixed probability vector:
+\begin{itemize}
+    \item $\gls{mov}$ a random partition: \SI{20}{\percent}
+    \item $\gls{mov}$ a partition scheduled in the module with lowest $\gls{alpha}$: \SI{40}{\percent}
+    \item $\gls{sw}$ on two random partitions: \SI{17}{\percent}
+    \item $\gls{sw}$ on two partitions in exclusion: \SI{2}{\percent}
+    \item $\gls{sw}$ on the module with the least memory remaining: \SI{1}{\percent}
+    \item $\gls{sh}$ on the module with lowest $\gls{alpha}$: \SI{10}{\percent}
+    \item $\gls{sl}$ on the module with lowest $\gls{alpha}$: \SI{10}{\percent}
+\end{itemize}
+Of course these values might not be the most favourable ones for every problem instance, however, a suitable rule for dynamically adjusting these probabilities was not found, so these values were determined empirically.
+
+\subsubsection{Strategy}
+
+Upon description of these operators, one should intuitively notice that these operators are sufficient for reaching any possible distribution of partitions among modules.
+In particular, just applying $\gls{mov}$ at random visits every possible state with respect to the partition assignment to modules, given enough time.
+Furthermore, with $\gls{lop}$ we can reach every equilibrium point corresponding to local maxima.
+
+The implemented algorithms are identical in most aspects. 
+A copy of the best state so far is kept at all times, and is returned if the stopping condition is verified or the algorithm is stopped early.
+Additionally, a current state (or a population of states) is kept, and the algorithm traverses the search space by applying the operators to generate new states.
+The new states can be better (in the sense of the optimization criterion) or worse than the current state, and the policy that decides whether to accept or reject a new state is the main distinguishing factor between the meta-heuristic algorithms.
+
+\subsection{\glsfmtlong{sa}}
+
+\glsxtrlong{sa} is a probabilistic optimization meta-heuristic with an analogy from the cooling of materials.
+Essentially conceived for minimization problems, states are characterized by their energy which is meant to be minimized.
+At each iteration, the algorithm generates a candidate state through a given operation. 
+If this has lower energy, then the algorithm always moves to this state, but even if the energy is higher it will move to this state with probability $\gls{prob}$.
+This probability of accepting a higher energy state is a function of the increase in energy and of the temperature. 
+The temperature is initially high and decreases with successive iterations, with higher temperatures allowing for more likely accepting higher energy states, which is analogous to how minerals form in cooling materials.
+For maximization problems it is usual to simply flip the sign of the evaluation function \cite{kirkpatrick1983optimization}.
+
+What this means is the algorithm is non-greedy at the start, but becomes progressively more greedy as it progresses.
+It is essential for any algorithm of this type that worse states are sometimes accepted, as this is important for the search to overcome local maxima.
+The algorithm is tuned by defining the initial temperature, cooling schedule, and acceptance function \cite{orsila2008best}.
+
+The initial temperature, $T_0$, should be high to allow exploration of the search space.
+If too low, the optimization procedure will be greedy and unable to escape local maxima, but if too high, the procedure is essentially random search, and initial iterations are useless.
+The most common cooling schedule which is used here is the geometric cooling schedule,
+\begin{align}
+    T(i) = T_0q^{\frac{i}{N}},
+\end{align}
+where $N$ is the number of iterations, $i$ the current iteration, and $q<0$ the geometric ratio.
+With this schedule, the temperature decrease quickly and converges to $qT_0$.
+
+The acceptance function used is the normalized exponential form \cite{orsila2008best},
+\begin{align}
+    \gls{prob} = \exp\braces*{\frac{c-c_{\text{new}}}{k\cdot T(i)}},
+\end{align}
+where $c$ denotes cost ($c\equiv-\gls{ev}(\gls{St})$), and $k$ is a scaling factor.
+This acceptance function has the characteristic that a sideways move, $c=c_\text{new}$, is always taken.
+The parameters $T_0$, $q$, $k$ can be determined experimentally to suit the specific problem.
+Some authors recommend that, at the highest temperature, the probability associated with the worst expected change in cost should be \SI{50}{\percent} \cite{orsila2008best}.
+For reference, in this implementation at the starting temperature, a probability of $\gls{prob}=\SI{50}{\percent}$ is verified for a decrease $∆\gls{alpha}=-0.4$.
+
+Several stopping conditions can be used, such as thresholds for temperature and energy, or mechanisms to detect convergence such as consecutively rejecting too many states or not finding an improving solution in many iterations \cite{orsila2008best}.
+Here we use a maximum number of iterations, which is equivalent to defining a final temperature, and a target value for $\gls{alpha}$ as the stopping criterion.
+The implemented algorithm is shown in appendix \ref{an:sa}.
+
+\subsection{Tabu-search}
+
+Tabu-search is another generic optimization algorithm similar to \gls{sa}.
+The main difference is that, at each iteration, Tabu-search generates many neighbour states through some permutation of the problem variables and moves to the best one \cite{glover1998tabu}.
+Ideally, all neighbour states would be generated, however in problems like this one the neighbourhood is large and computationally expensive to explore, thus the search can be restricted to a beam of neighbours.
+To avoid getting stuck at a certain region of the state-space, the algorithm avoids revisiting solutions by keeping the most recently visited states in memory, in what is called the Tabu list.
+This is usually implemented as a \gls{lifo} queue of previous states, hashes of states or history of operations.
+It is updated at each iteration and has a size between 6 and 9 previous states \cite{pinedo2008scheduling}.
+
+The rule to always select the best neighbour characterizes this as a greedy algorithm, but the fact that only a limited number of neighbours are explored at a time also helps in combatting this, due to the possibility that all the randomly selected neighbours be worse than the current one.
+On the other hand, it also becomes possible to miss an improving solution with this mechanic.
+
+The stopping condition is essentially the same as for \gls{sa}, but one should note that this algorithm is steady-state and thus can run indefinitely without the converging nature of \gls{sa}.
+The implemented algorithm is shown in appendix \ref{an:tabu}.
+
+\subsection{Genetic algorithm}
+
+Genetic (or evolutionary) algorithms are inspired by the process of evolution through natural selection.
+Unlike \gls{sa} and Tabu-search, genetic algorithms operate on multiple states at a time, here called individuals on a population \cite{wall1996genetic}.
+
+The strength of a genetic algorithm comes from its exploration and exploitation capabilities. 
+Exploration of the search space is achieved by maintaining a diverse population and inserting random mutations \cite{fogel1994introduction}.
+In this context, mutation consist in modifying states by applying the $\gls{mov}$, $\gls{sw}$, $\gls{sh}$, and $\gls{sl}$ operators.
+Additionally, genetic algorithms perform exploitation or intensification of solutions by combining parts of different solutions, which is the crossover operator detailed in section \ref{sec:operators}.
+
+There are different ways of implementing a genetic algorithm, mostly with respect to the population type and size, the choice of operators, the population replacement strategy and the selection of individuals for mating.
+The performance of the algorithm is greatly dependant on the previous criteria, and these are empirically determined for each specific problem.
+In problems with an extensive search space and a low ratio of feasible to infeasible solutions, a generic genetic algorithm does not perform better than random search \cite{wall1996genetic}.
+
+For this problem, we apply a steady-state genetic algorithm, meaning the populations are overlapping between consecutive generations, as opposed to a classical algorithm where the population is entirely replaced by a new one at each iteration.
+With this, at each iteration, the worst elements are removed from the population and then the newly created individuals are inserted in their place. 
+The ordering here matters because this way the new individuals cannot be immediately removed.
+The population size and number of individuals replaced at each iteration should ensure that the best individuals are kept every time, so that there is more opportunity for these to contribute to improving solutions.
+However, a common problem of this strategy is premature convergence, which happens when the population consists of copies of the same sub-optimal solution.
+To balance this, a similarity measure between states is introduced, and diversity is promoted by allowing a limited number of similar states in the population.
+
+The similarity measure is based on the partition distribution.
+We define a cluster as a subset of individuals in the population that share the same partition distribution.
+Then, we define the maximum size for clusters, and preferentially remove the worst individual in the clusters with more individuals than allowed, and only when all clusters have the allowed size, the worst individuals in the entire population are removed.
+The implemented algorithm is shown in appendix \ref{an:genetic}.
+
+
+\section{Summary}
+
+We conclude this chapter by summarizing the complete solution methodology, assisted by the flowchart in figure \ref{fig:solution-flowchart}.
+
+\begin{figure}[hbtp]
+    \centering
+    \resizebox{\linewidth}{!}{\input{graphics/solution-flowchart.tex}}
+    \caption{Problem solving methodology.}
+    \label{fig:solution-flowchart}
+\end{figure}
+
+From the problem specification, we first apply the schedulability conditions given in equations \ref{eq:usage-infeasibility} and \ref{eq:chain-feasibility}.
+These are simple, lightweight conditions that can prove a problem infeasible right away, but we restate that these are not sufficient for schedulability.
+The \gls{csp} methodology described in section \ref{sec:constraint-programming} follows, whose purpose is to assign values to $\gls{f}_i,\ ∀\gls{p}_i∈\gls{P}$ such that the distribution constraints are met.
+By using a backtracking algorithm for solving the \gls{csp}, which is complete, it is again possible to prove the problem to be infeasible if this procedure fails.
+
+Having found a valid assignment, we apply the $\gls{lop}$ operator to compute the offsets, $\gls{t}_i,\ ∀\gls{p}_i∈\gls{P}$, and find an initial solution $\gls{St}$, which may or may not be valid already.
+From there, one of the meta-heuristic algorithms described in section \ref{sec:global} takes over.
+A new state $\gls{St}_{new}$ is found, by applying one operator, $\gls{mov}, \gls{sw}, \gls{sh}, \gls{sl}$ on the current one, $\gls{St}$, followed by local optimization ($\gls{lop}$) on the modules which were affected.
+Then the acceptance condition specific to the meta-heuristic determines whether or not this new state is accepted, and the process repeats.
+
+However, the flowchart is not accurate for the genetic algorithm which operates on a population of states, for this one specifically consult appendix \ref{an:genetic}.
+Also note Tabu-search generates multiple new states, $\gls{St}_{new}$ each iteration.
+
+The solution process stops after a stopping condition is verified, which can be a maximum number of iterations, elapsed time, or a solution as good as demanded is found.
+For the analysis of results in the next chapter, the stopping condition used is this last one.
+
+\end{document}

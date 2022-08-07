@@ -1,0 +1,43 @@
+\begin{algorithmic}[1]
+	\Procedure{Best\_response\_multiple\_windows}{\texttt{partitions}, \texttt{chains}, \texttt{offsets}}
+        \State $\texttt{players}\gets$ empty list
+        \ForEach{$p_i\in\texttt{partitions}$}
+            \State Add $\gls{chset}_i$ to $\texttt{players}$
+        \EndFor
+        \State $N \gets$\Call{length}{\texttt{players}}
+		\State $N_{\text{stable}} \gets 1$  
+        \State $i\gets 0$
+        \State $\texttt{threshold}\gets 0$
+		\While{ $N_{\text{stable}} < N$}
+            \State $p\gets$ \Call{next}{\texttt{players}}
+            \State \texttt{domain} $\gets$ \Call{valid\_offsets}{$p$, \texttt{chains}, \texttt{offsets}}
+            \State $t_{\text{new}} \gets$ \Call{best\_value\_b}{$p$, \texttt{domain}, \texttt{offsets}, \texttt{threshold}}
+            \If{$t_{\text{new}}=\texttt{offsets}[p]$}
+                \State $N_{\text{stable}} \gets N_{\text{stable}}+1$
+            \Else
+                \State \texttt{offsets}$[p]\gets t_{\text{new}}$
+                \State $N_{\text{stable}} \gets 1$
+            \EndIf
+            \State {// Once every full cycle around the players, after the 15th}
+            \If{$\mod\braces*{i,N}=0\ \land\ i/N>15$} 
+                \State $\texttt{threshold}\gets\texttt{threshold}+0.005$
+            \EndIf
+            \State $i\gets i+1$
+		\EndWhile
+		\State \Return \texttt{offsets}
+	\EndProcedure
+    \State
+    \Function{best\_value\_b}{$p$, \texttt{domain}, \texttt{offsets}, \texttt{threshold}}
+        \State $t_{\text{best}}\gets \texttt{offsets}[p]$
+        \State $\alpha_{\text{now}}\gets$ \Call{compute\_utility}{$t_{\text{best}}$, \texttt{offsets}}
+        \State $\alpha_{\text{best}}\gets\alpha_{\text{now}}$
+        \ForEach{$t\in\texttt{domain}$}
+            \State $\alpha_{\text{new}}\gets$ \Call{compute\_utility}{$t$, \texttt{offsets}}
+            \If{$\alpha_{\text{new}} - \alpha_{\text{now}} > \texttt{threshold}$ and $\alpha_{\text{new}}>\alpha_{\text{best}}$}
+                \State $t_{\text{best}}\gets t$
+                \State $\alpha_{\text{best}}\gets alpha_{\text{new}}$
+            \EndIf
+        \EndFor
+        \State\Return $t_{\text{best}}$ 
+    \EndFunction
+\end{algorithmic}

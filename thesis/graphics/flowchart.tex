@@ -1,0 +1,57 @@
+\begin{tikzpicture}[scale=1.0, node distance=0pt]
+
+    \node[block] (start) {start};
+    \node[block, below = 16mm of start] (load) {load problem data};
+    \node[file, above left = 0mm and 16mm of load] (file1) {\texttt{problem.yaml}};
+    \node[file, below left = 0mm and 16mm of load] (file2) {Program configuration};
+    \node[decision, below = 16mm of load] (select) {mode?};
+    \node[file, right = 16mm of load] (insights) {constraint insights};
+    \node[block, below left = 16mm and 20mm of select.south] (solve) {set exit condition $\alpha\geq 1$};
+    \node[block, below = 16mm of select.south] (opt) {set exit condition \texttt{max\_steps}};
+    \node[block, right = 55mm of select] (process) {load solution};
+    \node[file, above = 16mm of process] (sol) {solution file (\texttt{.yaml})};
+    \node[decision, below = 16mm of opt] (cache) {cached state?};
+    \node[file, right = 16mm of cache, dashed] (state) {\texttt{state.yaml}};
+    \node[block, below left = 16mm and 8mm of cache] (loop) {solution loop};
+    \node[block, below right = 16mm and 8mm of cache] (csp) {initial assignment with CSP};
+    \node[decision, below = 10mm of csp] (csp_success) {success?};
+    \node[block, below = 16mm of csp_success] (exit) {exit (problem infeasible)};
+    \node[decision, below=10mm of loop] (exit_cond) {exit condition?};
+    \node[block, below=24mm of exit_cond] (analyse) {process solution};
+    \node[block, below=24mm of analyse] (exit_success) {exit success};
+    \node[file, below right = 12mm and 5mm of analyse] (out1) {solution/state (\texttt{.yaml})};
+    \node[file, right = 4mm of out1] (out2) {formated solution (\texttt{.xml})};
+    \node[file, right = 4mm of out2] (out3) {graphical solution (\texttt{.tex})};
+    \node[file, right = 4mm of out3] (out4) {tabular schedule};
+
+    %%%%%%%%%%%%%%% %%%%%%%%%% %%%%%%%%%%%%
+
+    \path[line] (start) -- (load);
+    \path[line] (file1.east) --++(6mm,0) |- ([yshift=2mm]load.west);
+    \path[line] (file2.east) --++(6mm,0) |- ([yshift=-2mm]load.west);
+    \path[line] (load) -- (select);
+    \path[line] (load) -- (insights);
+    \path[line] (select) -| (solve);
+    \path[line] (select) -- node[fill=white] (l1) {`optimize'} (opt);
+    \path[line] (select) -- node[fill=white] {`process'} (process);
+    \node[fill=white] at (l1-|solve) {`solve'};
+    \path[line] (sol) -- (process);
+    \path[draw] (solve) |- ([yshift=3mm]cache.north);
+    \path[line] (opt) -- (cache);
+    \path[line] (state) -- (cache);
+    \path[line] (cache) -- node[fill=white] {yes} (loop.north);
+    \path[line] (cache) -- node[fill=white] {no} (csp.north);
+    \path[line] (csp) -- (csp_success);
+    \path[line] (csp_success) -- node[fill=white] {no} (exit);
+    \path[line] (csp_success.west) --++(-20mm, 0) node[fill=white] {yes} |- (loop.east);
+    \path[line] (loop) -- (exit_cond);
+    \path[line] (exit_cond.west) --++(-8mm, 0) |- node[fill=white] {no} (loop.west);
+    \path[line] (exit_cond) -- node[fill=white] {yes} (analyse);
+    \path[line] (process) |- (analyse);
+    \path[line] (analyse) -- (exit_success);
+    \path[line, dashed] ([yshift=-5mm]analyse.south) -| (out4);
+    \path[line, dashed, <-] (out3.north) --++(0,7mm);
+    \path[line, dashed, <-] (out2.north) --++(0,7mm);
+    \path[line, dashed, <-] (out1.north) --++(0,7mm);
+
+\end{tikzpicture}

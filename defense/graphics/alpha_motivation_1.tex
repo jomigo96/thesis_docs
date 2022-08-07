@@ -1,0 +1,17 @@
+\begin{tikzpicture}[scale=1.0]
+	%\tikzstyle my grid=[style=help lines, color=blue!50, step=1, very thin, dashed]
+	%\draw[style=my grid] (-1, -0.5) grid (17,2);	
+	
+	\draw[->, thick] (0,0) -- (16,0) node[below] {$t$};
+	
+	%\foreach \x in {5, 8} {
+	%	\draw[gray, dashed, thin] (\x, 0) -- (\x, 1.5);
+	%}
+	
+	\foreach \x in {0, 8} {
+		\draw[gray, fill=colorA] (\x, 0) rectangle node[black] {P1} ++(2.5, 0.5);
+	}
+	\draw[gray, fill=colorB] (2.5,0) rectangle node[black] {P2} ++(1, 0.5);
+
+	
+\end{tikzpicture}

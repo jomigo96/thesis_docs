@@ -1,0 +1,33 @@
+\begin{tikzpicture}[scale=1.00, node distance=0pt]
+
+    \node[block] (start) {problem instance};
+    \node[decision, right = 16mm of start] (check) {check feasibility};
+    \node[block, right = 16mm of check] (csp) {\gls{csp} assignment};
+    \node[circle, draw, below = 16mm of csp] (other) {};
+    \node[block, below = 16mm of other] (state) {$\gls{St}$};
+    \node[block, below = 5mm of state] (repeat) {repeat};
+    \node[circle, draw, left = 40mm of repeat] (intermediary) {};
+    \node[block, left = 16mm of intermediary] (new) {$\gls{St}_{new}$};
+    \node[decision, below = 16mm of new] (accept) {accept?};
+    \node[block] at (accept -| repeat) (replace) {replace $\gls{St}$ by $\gls{St}_{new}$};
+    \node[block, right = 24mm of csp] (infeasible) {problem infeasible};
+    \node[block] at (repeat -| infeasible) (end) {yield $\gls{S}$};
+
+    %%% %%% %%%
+
+    \path[line] (start) -- (check);
+    \path[line] (check) -- node[above] {ok} (csp);
+    \path[line] (csp) -- node[above] {failure} (infeasible);
+    \path[line] (csp) -- node[right] {ok} (other);
+    \path[line] (other) -- node[right] {$\gls{lop}$} (state);
+    \path[line] (state) -- (repeat);
+    \path[line] (repeat) -- node[above] {$\gls{mov}$, $\gls{sw}$, $\gls{sh}$, $\gls{sl}$} (intermediary);
+    \path[line] (intermediary) -- node[above] {$\gls{lop}$} (new);
+    \path[line] (new) --  (accept);
+    \path[line] (accept) -- node[fill=white] {no} (repeat);
+    \path[line] (accept) -- node[fill=white] {yes} (replace);
+    \path[line] (replace) -- (repeat);
+    \path[line] (repeat) -- node[below, align=center] {stopping \\ condition} (end);
+    \path[line] (check) edge[bend left] node[above] {failure} (infeasible);
+
+\end{tikzpicture}

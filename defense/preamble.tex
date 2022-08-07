@@ -1,0 +1,121 @@
+% -- essentials
+\usepackage{etoolbox}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{xcolor}
+%\usepackage[hidelinks]{hyperref}
+\usepackage[no-math]{fontspec}
+\usepackage{unicode-math}
+\usepackage[main = british, portuguese]{babel} 
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{caption}
+\usepackage{totpages}
+
+% -- Font setup
+\setsansfont{FiraGo}
+\setmathfont[Scale=MatchLowercase]{TeX Gyre Dejavu Math}
+\renewcommand{\familydefault}{\sfdefault}
+\setmonofont[Scale=MatchLowercase]{InconsolataN}
+
+
+% -- Extra symbols
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{empheq}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\braces}{\{}{\}}
+\DeclareMathOperator{\lcm}{\text{\slshape\mdseries\sffamily lcm}}
+% override some commands so they don't get rm fonts
+\let\max\relax
+\DeclareMathOperator*{\max}{\text{\slshape\mdseries\sffamily max}}
+\let\min\relax
+\DeclareMathOperator*{\min}{\text{\slshape\mdseries\sffamily\text{min}}}
+\let\mod\relax
+\DeclareMathOperator{\mod}{\text{\slshape\mdseries\sffamily\text{mod}}}
+\let\gcd\relax
+\DeclareMathOperator{\gcd}{\text{\slshape\mdseries\sffamily\text{gcd}}}
+\let\exp\relax
+\DeclareMathOperator{\exp}{\text{\slshape\mdseries\sffamily\text{exp}}}
+% user defined commands
+\newrobustcmd*\bigO{\mathcal{O}}
+\newrobustcmd*\mathdash{\text{-}}
+
+% -- Bibliography and citations
+\usepackage[
+	backend = biber,
+	style = numeric,
+	sorting = ynt,
+    maxbibnames = 8,
+    maxcitenames = 2,
+	%alldates=iso
+	]{biblatex}
+%\usepackage{fvextra}
+\usepackage[autostyle]{csquotes}
+\hypersetup{
+    hidelinks={true},
+}
+
+% -- Glossary and nomenclature (usage with bib2gls)
+\usepackage[record, symbols]{glossaries-extra}
+
+% --  Floats/images
+\graphicspath{{graphics/}}
+\usepackage{subcaption}
+\usepackage{flafter}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{ragged2e}
+\usepackage{multicol}
+
+% -- Drawing schemes and plotting
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{shapes, shapes.misc, shapes.symbols, positioning, decorations.pathreplacing, external, arrows.meta, patterns, plotmarks, hobby}
+\tikzset{>=Latex} % solid arrow tip shape
+\pgfplotsset{compat=1.16}
+\pgfplotsset{table/search path = {data}}
+\usepgfplotslibrary{statistics}
+\pgfkeys{/pgf/number format/.cd,1000 sep={}} % remove comma as thousands separator
+
+% -- Pseudocode and source code
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{verbatim}
+
+\renewcommand{\textproc}{\texttt} % typeset algorithmic function names
+% enable linking to algorithm line numbers. credit to https://tex.stackexchange.com/questions/148977/incorrect-reference-to-a-line-in-algorithmic-using-hyperref
+\newcommand\plabel[1]{\phantomsection\label{#1}}
+% define the for each loop in pseudocode. credit to https://tex.stackexchange.com/questions/149162/how-can-i-define-a-foreach-loop-on-the-basis-of-the-existing-forall-loop
+\algnewcommand\algorithmicforeach{\textbf{for each}}
+\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+
+% -- Tables
+\usepackage{booktabs}
+\usepackage{makecell}
+
+% -- Misc
+\usepackage[disable]{todonotes}
+
+% -- Extra math - units
+\usepackage[binary-units=true]{siunitx}
+
+% --- Specific to the DIMA-scheduler thesis document ---
+
+% -- custom colors
+\definecolor{ist-cyan}{cmyk}{1,0,0,0}
+\colorlet{colorA}{ist-cyan!50!gray}
+\definecolor{colorB}{HTML}{3D9970}
+\colorlet{colorC}{magenta!80!white}
+\colorlet{colorD}{orange!90}
+\colorlet{swred}{red!75!black!70!white}
+\colorlet{hwgray}{gray!30!white}
+
+% -- styles
+\tikzstyle module_style_1=[hwgray, dashed, fill=cyan, fill opacity=0.1]
+\tikzstyle module_style_2=[hwgray, dashed, fill=magenta, fill opacity=0.1]
+\tikzstyle{decision} = [diamond, draw, text badly centered, node distance=3cm, inner sep=0pt, text width=1.8cm]
+\tikzstyle{block} = [rectangle, draw, text centered, rounded corners, minimum height=1cm, inner sep=0pt, text width=3cm] 
+\tikzstyle{line} = [draw,->]
+\tikzstyle{file} = [tape, tape bend top=none, tape bend height=2mm, draw, minimum height=1cm, text width=2.6cm, inner sep=0pt, text centered]

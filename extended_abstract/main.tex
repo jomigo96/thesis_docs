@@ -1,0 +1,73 @@
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+% arara: biber: {options: ["--input-directory=build", "--output-directory=build"]}
+% arara: bib2gls: {group: yes, options: ["", "--dir=build", "--tex-encoding=utf-8"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+%
+%% This part is only necessary to correct page number references
+% arara: bib2gls: {group: yes, options: ["", "--dir=build", "--tex-encoding=utf-8"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+
+\documentclass[10pt, twocolumn, lm]{ist-abstract}
+
+\input{preamble.tex}
+
+% Bibliography
+\addbibresource{../thesis/bibliography.bib}
+
+% Glossary
+\GlsXtrLoadResources[
+    src={../thesis/glossary},      % input glossary.bib
+    sort={en-GB},                  % sort entries 'en-GB' style
+    match={entrytype={entry}},     % filter select @entry only
+    type={main},                   % place in the main glossary
+]
+\GlsXtrLoadResources[
+    src={../thesis/nomenclature},  % input nomenclature.bib
+    sort={en-GB},                  % sort entries 'en-GB' style
+    type={symbols},                % place in the 'nomenclature' glossary
+    match={
+        entrytype = {symbol}, 
+    },                             % filter select @symbol only
+]
+\glsdisablehyper
+
+% Set names etc
+\settitle{Partition Scheduling in Distributed Integrated Modular Avionics}
+\setauthor{João Gonçalves}
+\setauthoremail{joaomfgoncalves@tecnico.ulisboa.pt}
+\setdate{October 2019}
+\setinstitution{Instituto Superior Técnico, Universidade de Lisboa, Portugal}
+
+\setabstractkeywords{\glsxtrlong{a653}, \glsxtrlong{ima}, Scheduling, Optimization}
+\setabstracttext{
+    The \glsxtrlong{ima} architecture has replaced federated architectures in the avionic domain, allowing significant weight and power savings and enabling more competitive application development.
+    The resource-sharing nature of this architecture requires robust temporal and spatial segregation between applications, which is achieved by statically scheduling applications on shared avionic hardware.
+    This raises a multiprocessor scheduling problem, automation of which has seen limited progress in industry, but representing a significant challenge for system integration.
+    We propose a mathematical model for the partition scheduling problem associated with an optimization criterion based on system scalability and flexibility, and provide both heuristic and exact methods for its solution based on existing literature.
+}
+
+% Set additional pdf metadata
+\hypersetup{
+    pdfsubject = {Artificial Intelligence, Operations Research, Avionics},
+    pdfkeywords = {Arinc 653, Integrated Modular Avionics, Scheduling, Optimization},
+} 
+
+
+\begin{document}
+
+\makecover
+
+\subfile{introduction}
+
+\subfile{problem}
+
+\subfile{methodology}
+
+\subfile{results}
+
+\subfile{conclusion}
+
+\printbibliography[heading = bibintoc]
+
+\end{document}

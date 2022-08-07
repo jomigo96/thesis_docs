@@ -1,0 +1,425 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\setcounter{chapter}{1}
+
+\begin{document}
+
+\chapter{Background}
+\label{sec:background}
+
+This chapter describes the state of the art regarding avionic system architectures and relevant concepts to the partition scheduling problem.
+In section \ref{sec:related}, an overview of literature centred around the partition scheduling problem is given.
+
+
+\section{Evolution of avionic architectures}
+
+\subsection{Federated avionics}
+
+Avionic systems have traditionally followed a federated architecture, with each component or subsystem having its dedicated hardware and software, in what is defined as \glspl{lru}.
+Suppliers were responsible for developing both the hardware and software, and supply it as its own self-contained black-box component.
+This \textquote{one function -- one computer} concept coupled with redundancy provided high safety and reliability.
+Applications have guaranteed, deterministic access to processor resources, and \gls{io} with bounded latency and jitter.
+Maintenance is straightforward and inexpensive, as \glspl{lru} can be readily replaced by equivalent ones.
+Most importantly, with loosely coupled \glspl{lru}, critical functions cannot be impaired by low-criticality functions, and the modularity increases fault containment.
+
+However, the disadvantages of the federated architecture are evident.
+With a federated architecture, a function being added to the avionic system requires the addition of one of these \glspl{lru}, and this quickly escalates the mass, volume, cost and power consumption of the entire avionic system to infeasible amounts.
+Regarding costs, functions sharing a processor must be certified to the highest criticality level of those functions, and this encourages the usage of many processors with decreased utilization.
+On the other hand, modern processors have far more capability than a single critical function requires, and this constitutes an inefficient usage of resources \cite{mairaj2015preferred}.
+
+\subsection{\glsfmtlong{ima}}
+
+The aviation industry aimed to adopt a new paradigm that keeps the benefits of the federated concept and solves the problems mentioned above.
+The industry has adopted the \gls{ima} concept starting with the F-22 project, and reaching passenger aircraft in the 1990's, with the two best examples being the Airbus A380 and the Boeing 787 \cite{gaska2015integrated}.
+Currently, all new passenger aircraft models employ a form of this architecture.
+The main architectural principle is the introduction of shared computation resources, which contain functions from multiple applications -- a \gls{cpiom}.
+It rests on the concept of robust partitioning, specified in \gls{a651}, which prevents a failure in a function or in hardware unique to a function to cause another function to fail, thus inducing fault containment.
+With this, each piece of software can be certified independently to a proper criticality level, and risk is reduced since critical software is isolated.
+
+Early iterations of the \gls{ima} concept failed to achieve this desired feature, and combined industry effort pushed the establishment of the \gls{a653} standard, which specifies a standard interface between partitions and the underlying \gls{rtos}, called the \gls{apex}.
+\gls{a653} and \gls{apex} are described in the section \ref{sec:arinc}.
+
+The standardized interface allows for the development, testing and certification of avionic hardware and software to be made independently, which means smaller companies can supply just a specific part of software, being it a \gls{rtos} or functionality packaged in a partition, which in turn increases market competitiveness and leads to reduced costs.
+With respect to hardware, weight and power requirements are substantially reduced, as well as the different types of hardware which are closer standardized, and this leads to decreased integration and maintenance effort. 
+
+\Textcite{mairaj2015preferred} compares federated and \gls{ima} architectures having surveyed 35 projects that underwent the transition.
+The results show weight reductions of around \SI{50}{\percent} for all cases, volume reductions of \SIrange{30}{40}{\percent}, power savings of \SIrange{25}{30}{\percent}, and \gls{mtbf} increasing by a factor of \numrange{1.4}{3.8}.
+
+Adoption of \gls{ima} has been gradual, with developers adding higher criticality applications as confidence in the architecture was gained, and today, the overwhelming majority of avionic systems in passenger aircraft follows this architecture.
+However, one should note that even on modern aircraft, flight control systems are still implemented on a federated architecture, due to the need of tight synchronization and minimal jitter, as well as to concerns about redundancy management \cite{gaska2015integrated}.
+
+\subsection{Improvements to \glsfmtlong{ima}}
+\label{sec:future-ima}
+
+Current developments on the \gls{ima} concept aim to further abstract the applications from the hardware.
+In classic \gls{ima}, peripherals such as sensors and actuators are connected directly to the \glspl{cpiom}, that often must contain specific hardware to interact with these.
+The introduction of \glspl{rdc} allows to connect the peripherals directly to the avionic network.
+These are hardware devices that carry the necessary drivers for these peripherals and perform their \gls{io} to the avionic network, hence, the \glspl{cpiom}, now simply called \glspl{cpm}, do not require specific hardware and are further standardized.
+Another advantage of this is the reduced cabling needed, since \glspl{cpm} are usually confined to the avionics bay, potentially far from the peripherals.
+These systems are often called \gls{dima} since they distribute \gls{io} across the aircraft \cite{barros}.
+
+This finally accomplishes another goal for \gls{ima}, increased flexibility and reconfigurability.
+Addition or removal of functionality does not necessarily require recertification of the entire avionic system, and with efficient usage of the computational resources, addition of functionality does not require more hardware.
+
+A particular segment that is often overlooked is that of multi-mission \glspl{uav}.
+These are especially constrained in terms of weight and power, and benefit from expedite reconfigurability.
+There is an industry effort to enable automatic reconfiguration, via implementing multiple partition schedules that are switched when required.
+Albeit the schedules are static in the way that they are determined and validated in the system integration phase, the goal is that they can be loaded automatically at runtime when required.
+
+Also in the space segment, where weight minimization is even more critical, \gls{ima} is known by the designation \textquote{\gls{ima-sp}}.
+In this domain there are substantial differences, mainly because space systems do not have the opportunity for human intervention, and their mass, volume and power are tightly constrained.
+In the case of satellites, this leads to there being typically one or two main computing modules connected to the payloads with robust data buses \cite{silva2012integrated}.
+As a result, applications are integrated into a single binary, increasing the risk of fault propagation and forcing all software components to be certified to the highest criticality level.
+The adoption of \gls{ima-sp} would provide a hardware abstraction layer which in turn would allow software development for these applications to be divided among several teams, as well as reducing the integration effort and decreasing the overall system complexity due to its partitioning system \cite{windsor2011integrated}.
+
+Another active field in \gls{ima} is the inclusion of multicore processors.
+Multicore processors are replacing uniprocessor analogues in many application domains, with clear advantages in performance, weight, energy consumption, volume and cooling requirements \cite{melani2017scheduling}.
+However, safety-critical systems and in particular avionics have delayed its adoption, with the current cases where multicore processors are used disabling all but one core on each processor. % No citation, told by gmv expert
+It is clear that the technical advantages of multicore hardware and the manufacturing market moving away from uniprocessor technology are incentives for the aviation industry to adopt this technology.
+The main technical challenges to multicore technology in \gls{ima} stem from interference between applications, and loss of determinism. 
+Multicore platforms allow true parallelism with multiple threads existing simultaneously on separate cores, but with shared access to physical resources still being serialized \cite{silva2014multima}.
+Possible solutions to these include new processor designs that focus on predictability rather than optimizing for the average-case, but the ideal is still to use \gls{cots} processors.
+Other non-technical difficulties include the burden of migrating legacy software and complicated certification \cite{melani2017scheduling}.
+Scheduling tasks for multi-core \gls{ima} systems is a complex problem which is not addressed in this dissertation.
+
+\section{\glsfmttext{a653}}
+\label{sec:arinc}
+
+\begin{figure}[htbp]
+	\centering
+	\resizebox{0.95\linewidth}{!}{\input{graphics/arinc-scheme.tex}}
+	\caption{\glsfmttext{a653} architecture.}
+	\label{fig:arinc-scheme}
+    \glsadd{a653}
+\end{figure}
+
+\glsxtrlong{a653} \cite{arinc653} standardizes the interface between the \gls{rtos} and avionic application software.
+It is the product of joint effort by many major parties in the air transport industry, including airframe manufacturers, avionics and \gls{rtos} suppliers, governmental entities, and academia \cite{prisaznuk2008arinc}.
+Figure \ref{fig:arinc-scheme} sketches the \gls{a653} architecture in one \gls{cpm}, where the \gls{rtos} handles the partition management and exposes services to these partitions via the \gls{apex}.
+Internally, each partition consists an arbitrary number of periodic and aperiodic processes.
+
+At the time of writing, the specification is composed of 6 parts, with part 1 being of special interest to this dissertation. 
+\begin{description}
+	\item[Part 0] is a global overview of the standard.
+	\item[Part 1] specifies the set of required services the interface must implement.
+	\item[Part 2] specifies extended services that can be optionally implemented.
+	\item[Part 3] provides guidance for testing a \gls{rtos} conformity to the standard.
+	\item[Part 4] includes a subset of \gls{a653} for simplified application domains, enabling formal methods for analysis.
+	\item[Part 5] specifies the core software recommended capabilities.
+\end{description}
+
+On systems with shared resources, there are a number of ways one function can do damage to another one of higher criticality, resulting in an unexpected failure.
+These include: a function erroneously writing on memory belonging to another function; stealing processor time from a critical function, or crashing the processor; corrupting \gls{io}, by either outputting data appearing to come from the critical function or corrupting it before that function uses it.
+
+To remove these risks, the \gls{a653} specification resides on the concept of robust partitioning, which consists on spatially and temporally isolating applications, referred to as partitions.
+These are portions of software which bundle avionic functionality, and are analogous to processes in regular operating systems.
+However, a partition has internal processes, which divide functionality into smaller logical units, and the analogous of these in regular operating systems would be threads.
+
+The partitioning is two-dimensional: space partitioning ensures protection of the program's data, dedicated \gls{io} and registers, and time partitioning ensures unrestricted access to the processor and sufficient communication bandwidth in a given time window.
+
+\subsection{Space partitioning}
+
+Space partitioning should ensure that software in one partition cannot change data from another partition, either in memory or in transit, nor interact with private devices of another partition, i.e. peripherals \cite{ananda2013arinc}.
+This is achieved by providing each partition with exclusive access to certain memory regions.
+The implementation is software based, via high-integrity write protection and separate virtual memory spaces managed by the \gls{rtos}. 
+The two key principles are: any persistent storage location must only be writeable by one function, and any temporary storage location used by a function, for example processor registers, must be saved when control is transferred away from that function and restored before resuming.
+
+\subsection{Time partitioning}
+
+Time partitioning is required so that a function has the necessary access to hardware resources for whatever time it requires, and doing so in a predictable way.
+The way this is achieved is by deterministically scheduling processor time to functions.
+At the partition level, static schedules are created at the system integration phase, assigning time windows or frames to partitions in such a manner that its correct functioning is assured.
+This is the origin of scheduling problem on which this dissertation focuses.
+On the process level, scheduling is done at runtime, via fixed priority task scheduling algorithms, namely rate monotonic scheduling.
+
+\subsection{Interface}
+\label{sec:interface}
+
+The standard interface is known as \gls{apex}, and is composed of several main components \cite{samolej2011arinc,arinc653}:
+\begin{itemize}
+	\item partition management,
+	\item process management,
+	\item time management,
+	\item memory management,
+	\item inter-partition communication,
+	\item intra-partition communication,
+	\item health monitoring.
+\end{itemize}
+Partition management services are related to running modes, and allow the system to start, restart or stop a partition when needed.
+The \gls{rtos} selects the process with the highest priority to run within a partition, and \gls{apex} provides services to manage processes, like creating processes and collecting their status, changing priorities, and changing preemption status.
+
+Time management allows managing deadlines, periodicity and budget times given to processes, as well as time-outs for communications.
+
+Memory management is a major component of any operating system, however, in order to enforce space partitioning, \gls{apex} does not provide any memory management services.
+Instead, the partition memory space is statically reserved at build time.
+
+Inter-partition communications allows for exchanging messages between partitions on the same or on different modules. 
+These services preserve message ordering and hide any underlying division of large messages in smaller ones from the application.
+Communications are based on channels, which are logical links between a source and one or more destination partitions, and determine the characteristics of the messages being sent.
+\gls{apex} provides partitions access to channels via ports, which are configured by the system integrator and not the application developer.
+Two different kinds of ports exist: sampling ports store the message along with a freshness parameter (i.e. a timestamp) which can be queried by the destination application. 
+Each message sent on that port overwrites the previous one, and these are meant for the kinds of channels that carry identical but updated data, such as sensor measurements.
+Queuing ports allow buffering of multiple messages in a \gls{fifo} queue, which assures that every message is carried in the channel with preserved order, as long as the buffer memory is not full.
+Adding to these mechanisms, on certain cases, communication between partitions in the same module can be implemented with shared memory regions.
+
+Finally, health monitoring periodically checks the system for errors or exceptions and dispatches the appropriate error handler, which can log the error, stop or restart the failed process or the whole partition.
+
+
+\section{Communications network}
+
+Communication buses for \gls{ima} systems have different requirements than older avionic systems.
+In particular, federated systems accept a one-to-one or one-to-many network topology, where any two nodes that must be connected require a dedicated cable with its own interface.
+The de-facto bus used until the adoption of \gls{ima} was \gls{a429}.
+Since \gls{ima} systems eliminate many of these physical links between nodes, the data buses must offer higher bandwidth than \gls{a429}, and the shared nature of these devices demands robustness and determinism.
+
+Today, many competitive standardized data buses exist, with the most prevalent being \gls{afdx}.
+\Gls{afdx} was developed by Airbus and later became standardized in the \glsxtrlong{a664} \cite{arinc664}, its main motivation was integration with \gls{ima} and usage of \gls{cots} components, namely Ethernet technology, while maintaining the required reliability.
+Determinism is guaranteed by the definition of virtual links, which emulate the point-to-point nature of an \gls{a429} bus, offering full-duplex capabilities.
+The virtual links are defined with a configuration table that specifies the network configuration, and through bandwidth reservation services, the bus guarantees bounded \gls{ete} latencies in the network \cite{gwaltney2006comparison}.
+However, determining these worst-case \gls{ete} latencies still poses a significant challenge in the system integration phase, and is also required for certification purposes; see \textcite{benammar2017forward} for the problem of determining the worst case latencies, and \textcite{annighofer2013supporting} for an optimized approach to determining the network topology under \gls{afdx} and \gls{ima}.
+
+Many other technologies with limited to considerable presence in the industry exist, we raise attention to \gls{tte}, which is used in distributed systems where tight synchrony is required.
+Messages on this network are statically scheduled, which guarantees they are correctly transmitted in the time slot they are given \cite{beji2014smt, robati2016model}.
+
+\section{Partition scheduling}
+
+An \gls{ima} system is composed of several \glspl{cpm} with each hosting a set of partitions, with a static, cyclic partition schedule.
+The schedule is static because it is configured at build time, and does not change at runtime.
+A partition is forcefully stopped at the end of its allocated time window, and control transferred to the next one to ensure fault containment.
+It is cyclic because a representative unit is continuously repeated while the system is active.
+
+\subsection{Partition scheduling model}
+
+Scheduling partitions in \gls{ima} involves decisions in two domains.
+Firstly, \gls{ima} makes it possible that partitions are capable of running on many if not all available \glspl{cpm}, but the schedule restricts that each must run on only one.
+Part of the scheduling problem consists in assigning partitions to different processors, verifying their real-time constraints.
+These can include memory, stack-size, bandwidth, as well as other constraints related to redundancy management.
+Also, each partition must be allocated time windows to execute while also verifying time segregation with other partitions in the same module, and being able to communicate with other elements in the avionic network.
+
+Partitions are characterized by a period and an execution requirement, which are measured in integer units of time, noting that the highest precision for time measurements in real-time computing systems is the CPU clock period.
+Partitions are executed strictly periodically, which means that the time separating two consecutive execution windows (or instances, jobs) of the same partition is exactly the partition period.
+The period is defined based on functional requirements of the application, and is considered a step prior to scheduling.
+For information on this step, see for example \textcite{nasri2015efficient}.
+This strict periodicity is common in real-time systems as it is required by control loops for example, but it must be noted that the \gls{a653} standard does not enforce this. 
+What is required is that there is a \textquote{periodic processing start}, a point in a partition schedule coinciding with the beginning of a window where the internal periodic process scheduling is allowed to start \cite{arinc653}.
+The execution requirement is taken as the \gls{wcet} of the partition and can be provided by the application developer, or determined through testing since it is dependent on the hardware.
+The smallest unit of repetition of the schedule in one \gls{cpm} is called the \gls{maf}, or in other words the hyper-period of the partitions scheduled in that \gls{cpm}.
+This is the smallest time window that is indefinitely repeated, and is equal to the \gls{lcm} of the partition periods, which guarantees that at least one partition time window be allocated to each partition in the duration of one \gls{maf}. 
+The \gls{maf} concept is shown in figure \ref{fig:maf-scheme},  with all partition periods sharing a factor of \num{2}, making the \gls{maf} equal to the largest one.
+
+\begin{figure}[htbp]
+	\centering
+	\resizebox{0.95\linewidth}{!}{\input{graphics/schedule-example.tex}}
+	\caption{Example schedule with 3 partitions.}
+	\label{fig:maf-scheme}
+\end{figure}
+
+Given the strict periodicity of partition executions, once an execution window is defined, all subsequent ones are implicitly defined, thus the starting time offset with respect to the \gls{maf} is sufficient to fully describe the schedule of a partition.
+The typical partition scheduling problem is combining this with distributing the partitions among the available \glspl{cpm}, complying with some constraints.
+This is part of the problem we aim to solve, and the constraints considered are exclusion, inclusion (or cohabitation), domain, memory, temporal segregation and communication constraints, these are described in detain in chapter \ref{sec:problem}.
+Furthermore, this is transformed into a \gls{cop}, by the defining an optimization criterion based on flexibility, as introduced in \cite{al2010partition}, which intuitively consists in providing each partition with room to increase its execution window without interfering with other partitions.
+In practice, this is achieved by scheduling idle time in-between partition executions, and this is described in detail in section \ref{sec:optimization-criterion}.
+In addition to this, we also investigate an extended problem variant explained next.
+
+\subsection{Extended model}
+\label{sec:extended}
+
+This work expands on classical partition scheduling problem by allowing each partition instance to be split in multiple windows at the partition schedule, maintaining strict periodicity for the first window, as sketched in figure \ref{fig:preemption-scheme}.
+This requires suspending a partition in the middle of its execution, which is ultimately preemption, therefore the cost associated with preemption must be evaluated and prevented from affecting the system behaviour.
+In general, preemption is undesirable in real-time systems due to the following issues:
+\begin{itemize}
+	\item Preemption destroys program locality, increasing cache misses and ultimately the execution time, making \glspl{wcet} harder to characterize \cite{buttazzo2012limited}.
+	\item For control applications, the \gls{io} delay and jitter should be minimized, and this is achieved when the process is allowed to run continuously and non-preemptively \cite{buttazzo2012limited}.
+	% mention critical sections 
+	\item The actual context-switching mechanism takes time, and is not negligible compared to the partition execution requirements.
+\end{itemize}
+However, it improves schedulability and allows for higher processor usage loads.
+The first issue on the previous list can be tackled by implementing cache restoration on context switches, and the third by experimentally evaluating the time expended on context switching, similarly to how the \glspl{wcet} are determined, and taking this time into account.
+Additionally, we can control exactly where preemptions are possible, thus forbidding interruption on critical sections and \gls{io}, but the disadvantage is that the system integrator needs to have knowledge of the partition internal details.
+Control-related applications remain unsuitable to have their execution instances split into multiple windows.
+
+ \begin{figure}[htbp]
+	\centering
+	\resizebox{0.7\linewidth}{!}{\input{graphics/schedule-broken.tex}}
+	\caption{Partition schedule with some executions split in two windows.}
+	\label{fig:preemption-scheme}
+\end{figure}
+
+One specific motivation for introducing multiple windows per instance is the case shown in figure \ref{fig:preemption-scheme}, where the gaps left by the periodic execution of a partition with a small period are smaller than the execution requirement of another partition. 
+In this case, maintaining both temporal segregation and strict periodicity is only achievable by using multiple windows per instance.
+
+Using more execution windows as described adds complexity to the problem, for the solution will also need to specify the subdivision in windows, and any additional one can be freely scheduled as strict periodicity does not apply.
+Throughout this dissertation, this extension to the problem is considered separately.
+
+\subsection{Multiple schedules in \glsfmttext{dima}}
+
+As stated in section \ref{sec:future-ima}, one goal in the future of \gls{dima} is for the \glspl{cpm} to autonomously react to a change in configuration, such as introduction of mission specific payloads, by loading the necessary applications and thus changing the partition schedule.
+Additionally, changing schedules can be a form of fault management, for example by having specific schedules that are loaded to compensate for partitions or \glspl{cpm} failing.
+
+However, all the possible configurations are static and still require independent certification, hence, from the point of view of this problem, they are considered distinct scheduling problems altogether.
+
+\section{Related work}
+\label{sec:related}
+
+\subsection{Scheduling in real-time systems}
+
+The pioneering work of \Textcite{liu1973scheduling} proves the completeness of the earliest deadline first scheduling algorithm for the dynamic scheduling of real time preemptive tasks on a single processor, that is, the algorithm always finds a valid solution if one exists.
+Considerable amount of work was devoted to preemptive runtime scheduling, for a sample see \textcite{buttazzo2011hard}, and \textcite{easwaran2009compositional} in the avionic domain.
+
+Strictly periodic scheduling has received less attention in comparison.
+\Textcite{korst1992periodic} introduced this problem in the context of digital signal processing, deriving a necessary and sufficient condition for schedulability of two tasks.
+Following work by \textcite{korst1996scheduling} proves that the problem is NP-complete even for the case of one processor.
+
+Several authors \cite{kermia2006non, verschae2010scheduling, mayank2017non, zheng2017scheduling} approach real-time multi-processor scheduling as a case of the bin-packing problem, with the ultimate goal being to minimize the number of processors needed to schedule all tasks.
+\Textcite{mayank2017non} focus on non-preemptive periodic tasks, their approach consists in sequentially assigning tasks to processors using variations of the best-fit and first-fit heuristics, followed by scheduling using a non-preemptive earliest deadline first algorithm.
+\Textcite{zheng2017scheduling} study the scheduling problem of non-preemptive strictly periodic tasks on multiple processors, modelling it with \gls{milp} which can yield optimal solutions. 
+A heuristic sequential task assignment algorithm is proposed which compares favourably to the exact one, in the sense that it offers inferior time complexity at an acceptable cost in optimality.
+
+Schedulability conditions for the strictly periodic non-preemptive case are derived in \textcite{marouf2011scheduling}, motivated by the avionics domain.
+The analysis is done separately for harmonic and non-harmonic periods, with the schedulability conditions for the former being necessary and sufficient. 
+For the latter, only a sufficient condition exists, which can be used to assert if a set of tasks remains schedulable after the addition of a new task, thus a sequential process can prove schedulability for any task set.
+
+\subsection{Partition scheduling for \glsfmtlong{ima}}
+
+Authors model the partition scheduling problem in different ways, including mixing process and partition-level scheduling. 
+The prevalent modelling methods used are \gls{milp} and one instance of \gls{smt}, as well as other heuristic approaches.
+\gls{milp} or \gls{ip} formulations are the preferred choice for general discrete \glspl{cop}, and are able to reach optimal solutions via branch and bound or branch and cut algorithms.
+However, for intractable problems like this one, large dimension problems cannot be tackled by these methodologies in acceptable time, therefore there is a global effort in literature to employ heuristic algorithms for partition scheduling.
+
+\Textcite{lee2000scheduling} represent the first efforts to automate scheduling for \gls{ima} platforms.
+They address the problem of scheduling partitions as well as the corresponding tasks in a two-level schedule, considering also message transmission between tasks.
+Tasks are scheduled with a fixed-priority preemptive schedule, and partitions are iteratively assigned a starting time until the requirements are met.
+The partitions are assumed to have harmonic, strict periods, and part of their execution time is dedicated to communications. 
+Practical constraints to the \gls{ima} domain are suggested: the replication of partitions as a redundancy mechanism; the possibility to modify partition characteristics without redoing the schedule as a means to decrease recertification costs; and the time tick based schedule, which means that all variables with units of time must be integer numbers, usually of microseconds.
+Although this work laid the groundwork for the formal definition of the requirements for partition scheduling, the iterative algorithm used is insufficiently robust for modern instances of the problem, given that it is essentially brute-force search.
+
+\Textcite{easwaran2009compositional} focus on the scheduling of partition processes, considering a pre-defined partition scheduling policy, using the deadline monotonic algorithm.
+Each process is subject to a periodic release time that is affected by a maximum amount of jitter, which consists in loose periodicity.
+The description is accurate such that it considers communications by limiting the time of processing chains, and considers the impact of preemption overheads and blocking times, yielding formal guarantees for certification purposes.
+However, it is incomplete as scheduling is carried out independently for each module, and a simplistic solution is taken for partition-level schedules.
+
+\Textcite{eisenbrand2010solving} solve the problem of scheduling partitions with strict periodicity requirements in the minimum number of processing modules using an \gls{ip} formulation.
+They show that their formulation optimally solves this bin-packing problem and outperforms similar implementations, with computation times taking less than \SI{15}{\minute} for large examples provided by Boeing.
+The constraints supported are mostly Knapsack constraints, by limiting memory and bandwidth at each module, but there are also redundancy and cohabitation constraints. 
+What is missing is inter-partition communications, as it is only considered that not exceeding the modules' bandwidth is considered sufficient to guarantee communication.
+Overall, this work is shown superior to other approaches to the problem of minimizing the number of modules.
+
+This optimization is of undeniable interest for applications where weight minimization is paramount.
+However, often the hardware configuration is defined even before the scheduling phase, and in any case the resulting schedules are congested, leaving the system difficult to adjust.
+
+\Textcite{al2010partition} deal with partition scheduling with strict periodicity constraints and inter-partition communications.
+The optimization criterion consists in maximizing the worst-case scalability potential of every partition.
+The communication model is based on processing chains, and considers an asynchronous network.
+An exact \gls{milp} formulation is used which solves the problem for small scale examples, however, it fails to converge for fairly large problems in acceptable time.
+A preprocessing step based on graph theory is proposed, and it achieves a substantial reduction in computation times, provided all \glspl{cpm} have identical characteristics.
+
+This optimization criterion is valuable to avionic systems because it facilitates integration and maintenance, as small adjustments to partition execution budgets are possible.
+The approach is also extensive with respect to the constraints supported, however, the concept under the communication model is questionable, as supplementary delay is assumed for all communications to account for asynchrony between \glspl{cpm}, even if the communication is performed within one \gls{cpm}.
+Also, being a purely exact approach, it is unable to handle cases with modern dimension, notwithstanding the great reduction in solution time achieved by the preprocessing step.
+
+On their following paper, \textcite{al2012strictly} introduce an alternative method to perform local search based on the best response algorithm coming from Game Theory.
+An initial schedule is found from a greedy algorithm, then partitions update, one at a time, their allocations and starting times until no changes can be made that benefits any of them individually. 
+It is shown that this algorithm converges in a finite number of steps to a local maximum, and that the optimal solution is found for a good enough starting point.
+A multi-start method with Bayesian stopping rules is used to explore a greater portion of the search space and stop when some probabilistic certainty is obtained that the solution found is optimal.
+However, communication constraints are dropped to accommodate this heuristic.
+
+Results show that the described heuristic compares favourably to the exact formulation, reaching optimal or close to optimal solutions much quicker.
+Since this essentially depends on the initial state, the authors attempt to increase the likelihood of finding the optimum by using more starting states.
+However, this consists in solving the whole problem many times, and could be improved.
+
+
+On a completely different paradigm, \textcite{beji2014smt} aim to minimize the cost of integration in \gls{ima} systems, considering the partition scheduling and network topology based on \gls{tte}.
+They distinguish hard constraints, related to the network and the usual partitions segregation requirements, and soft constraints, related to the integration costs.
+Hard constraints should always be satisfied whilst soft constraints only impose a penalty if they are not.
+The approach is a holistic scheduling of partitions and messages in the \gls{tte} network, with detailed constraints related to the \gls{tte} technology.
+Distribution constraints are restricted to redundancy at the partition level, and in fact for some cases it is required that the different partition instances run synchronously, on different \glspl{cpm}.
+The problem is encoded in \gls{smt} language, a form of constraint programming, and solved with an \gls{smt}-based tool for a relatively small example.
+
+The optimization performed is interesting as it aims to minimize costs, and this work also showcases the relevancy of \gls{tte} in the avionic domain.
+This is also the main disadvantage, as the model is specific to this technology, hence it is not portable to other \gls{ima} implementations.
+
+\Textcite{pira2016line} also use a Game Theory heuristic proposed in \cite{al2012strictly} for scheduling strictly periodic tasks on multiprocessors, and compare it to an exact \gls{milp} solution.
+In particular, they found that for large-scale examples, the heuristic could yield at least a feasible solution in minutes, while the number of variables was too large to even load the \gls{milp} solver.
+Their contribution consists of detailing efficient methods for computing the optimal partition offsets in this heuristic, which are based on linear programming, improving the performance of the methodology presented in \textcite{al2012strictly}.
+
+\Textcite{melani2017scheduling} explore multicore scheduling in the context of \gls{ima}.
+The authors propose to mitigate the introduced temporal unpredictability by forcing synchronous context switching across cores, and splitting the partition execution times in a critical section and an optional section.
+The solution is a mixed pre-runtime and runtime scheduler, partitions are still assigned fixed slots in a conservative manner, but at runtime, a resource reclaiming mechanism redistributes the unused time budgets.
+The simulation results show that this approach is a promising solution for implementing \gls{ima} on multicore platforms, and a valid framework for describing these systems.
+On the other hand, a runtime component of this schedule is not anticipated in \gls{a653}, and as a result, a solution like this cannot be implemented in the foreseeable future.
+
+\Textcite{blikstad2018optimisation} approach the problem of pre-runtime scheduling of tasks with loose periods on an \gls{ima} platform with a \gls{milp} formulation.
+This is done at the process level and also considering communication between tasks, which are characterized explicitly by their release times, deadlines, and execution times, as well as knapsack and other distribution constraints. 
+The approach consists on a comprehensive mathematical model of the whole avionic system, with a constraint generation procedure to supply the \gls{milp}-encoded model.
+Given this, no particular optimization goal is given, and the execution time is significantly higher than the other approaches -- ranging up to weeks for larger examples.
+
+The main issue, in my opinion, is the excessive abstraction used, which does not clearly distinguish partitions and processes in the context of \gls{a653}.
+Also, as with the other approaches that use \gls{ip}/\gls{milp}, the solution time is substantial, although for the author's industrial application with Saab, this was deemed acceptable.
+
+Table \ref{tab:related-work} summarizes the different approaches in literature, by the order they were introduced.
+
+
+\subsection{Relevant scheduling work in other domains}
+
+The present scheduling problem is rather specific to the avionic domain.
+Below we list two contributions in the general domain of scheduling that are somewhat similar to ours.
+
+For scheduling in more general applications the reader can refer to \textcite{pinedo2008scheduling}, providing a full overview of the topic, with special attention to the manufacturing and service industries.
+Stochastic models are used for dealing with uncertainty, something that sees no application in real time systems, except when determining worst-case values for quantities like communication delays and execution times.
+Special attention is called to heuristic methods for undertaking optimization problems in general, such as genetic algorithms, \gls{aco}, \gls{sa}, Tabu-search, beam-search, and agent-based and machine learning methods, which inspired the approach in this dissertation.
+
+At last, an alternative approach to periodic scheduling is done in \textcite{bar2004efficient}, which represent the problem using trees (acyclic directed graphs). 
+Their problem consists of a set of clients requesting from a service a fraction of the available bandwidth, for example in broadcast disks or Bluetooth \textquote{park mode}.
+Every client should get a strictly periodic time slot to access the service, and the goal is to minimize the difference between the clients' assigned and requested bandwidths.
+It is shown how to construct periodic schedules from trees, where each client is a leaf node and its period proportional to the degree of the nodes leading to it.
+An optimal algorithm for constructing the optimal tree is given, which runs in exponential time, and several heuristic algorithms approximate the optimal solution in polynomial time.
+It is noted, however, that not every periodic schedule has a tree representation.
+
+\subsection{Contributions}
+% State where exactly this thesis comes in
+
+This dissertation follows a problem model similar to \textcite{al2010partition} and with the same optimization goal, but considering synchronous communication between partitions, and additional constraints restricting on which \glspl{cpm} partitions can be scheduled.
+
+Identically, the \gls{milp} model is adapted to our variant of the problem, and the best response heuristic algorithm \cite{al2012strictly, pira2016line} is adapted to perform local search.
+For global search, stochastic optimization algorithms, namely \gls{sa}, Tabu-search and a genetic algorithm are used to complement global search, as presented by \textcite{pinedo2008scheduling}.
+
+We also include an extended model where partition execution can be divided in multiple windows, and this component is novel in literature.
+The best response algorithm is adapted to solve this case as well.
+However, this analysis is done separately and is not included in the \gls{milp} model.
+
+% This is specific to how the paragraphs are laid out right now. Edit as needed
+\vspace{3cm}
+\begin{table}[h]
+    \renewcommand{\arraystretch}{1.4}%
+    \centering
+    \caption{Summary of related work in \glsfmttext{ima} partition scheduling.}
+    \label{tab:related-work}
+    { \small
+    \begin{tabularx}{\linewidth}{l|>{\RaggedRight}X|>{\RaggedRight}X|>{\RaggedRight}X|>{\RaggedRight}X|l}
+    \toprule
+    \multirow{2}{*}{Reference} & \multirow{2}{*}{Optimization} & \multirow{2}{*}{Methodology} & \multicolumn{3}{c}{Constraints} \\[4pt]
+                               &                               &                              & Timing & Distribution & Communication \\
+    \midrule
+        \textcite{lee2000scheduling}         & --                             & Constraint-based                           & Strict  periods & Redundancy & Process-level  \\
+        \textcite{easwaran2009compositional} & --                             & Runtime scheduling with deadline monotonic, process-level     & Loose periods with minimum jitter & -- & Process-level \\
+        \textcite{eisenbrand2010solving}     & Minimize the number of \glspl{cpm} & \glstext{ip}                               & Strict periods & Redundancy, cohabitation, Knapsack & --  \\
+        \textcite{al2010partition}           & Scalability                    & \glstext{milp}                                 & Strict periods & Redundancy, Knapsack & Partition-level  \\
+        \textcite{al2012strictly}            & Scalability                    & \glstext{milp} and best response heuristic     & Strict periods & Redundancy, Knapsack & -- \\
+        \textcite{beji2014smt}               & Integration cost               & \glstext{smt}                                  & Strict periods, synchronous redundancies & Redundancy & Partition-level \\
+        \textcite{pira2016line}              & Scalability                    & \glstext{milp} and best response heuristic     & Strict periods & -- & --  \\
+        \textcite{melani2017scheduling}      & --                             & Dedicated algorithms                       & Multicore, synchronous context switching & -- & -- \\
+        \textcite{blikstad2018optimisation}  & --                             & \glstext{milp}                                 & Loose periods & Redundancy, cohabitation, Knapsack & Partition-level \\
+        \midrule
+        This dissertation                    & Scalability                    & \gls{milp}, best response heuristic, stochastic optimization & Strict periods & Redundancy, cohabitation, Knapsack & Partition-level \\
+    \bottomrule
+    \end{tabularx}
+    }
+\end{table}
+
+\end{document}

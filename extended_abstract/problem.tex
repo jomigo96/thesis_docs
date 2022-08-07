@@ -1,0 +1,314 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {options: ["--dir=build", "--tex-encoding=utf-8", "--group"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+
+\section{Problem definition and modelling}
+\label{sec:problem}
+
+Consider a set of $\gls{Np}$ partitions $\gls{P} = \braces*{\gls{p}_1, \gls{p}_2, \ldots \gls{p}_{\gls{Np}}}$ to be scheduled in $\gls{Nc}$ modules $\gls{C} = \braces*{\gls{c}_1, \gls{c}_2, \ldots \gls{c}_{\gls{Nc}}}$.
+Partitions $\gls{p}_i\in\gls{P}$ are characterized by:
+\begin{itemize}
+    \item $\gls{e}_i$ -- execution requirement in units of time, taken as its \gls{wcet}.
+    \item $\gls{T}_i$ -- period, in units of time.
+    \item $\gls{s}_i$ -- memory requirement, in arbitrary units.
+\end{itemize}
+
+Modules $\gls{c}_m\in\gls{C}$ are characterized by:
+\begin{itemize}
+    \item $\gls{S}_m$ -- memory capacity, in the same units as $\gls{s}$.
+    \item $\gls{eps}_m$ -- context switching cost, in units of time.
+\end{itemize}
+This context switching cost is a time penalty added to the partition execution when it is divided in multiple windows, corresponding to the time taken to restore the execution state.
+
+The assignment of partitions to modules is represented by variables $\gls{f}_i,\ ∀\gls{p}_i∈\gls{P}$, which denotes that partition $\gls{p}_i$ is assigned with the module with index $m=\gls{f}_i$.
+For convenience, we also define $\gls{Psub}_m⊆\gls{P}$ as the subset of partitions scheduled in module $\gls{c}_m$.
+That is,
+\begin{align}
+    \gls{Psub}_m ≡ \braces*{\gls{p}_i\in\gls{P},\ \gls{f}_i=m}.
+\end{align}
+
+The module \gls{maf} is the hyper-period of the partition periods hosted in each module:
+\begin{align}
+    \gls{H}_m ≡ \lcm{\braces*{\gls{T}_i}},\ \gls{p}_i\in\gls{Psub}_m,
+\end{align}
+where $\lcm$ denotes the least common multiple operator.
+Under this, a partition executes $\gls{K}_i = \gls{H}_m/\gls{T}_i$ times, and these individual executions are called jobs (notice $\gls{K}_i$ is an integer due to the definition of $\gls{H}_m$).
+Let now $\gls{t}_i$ be the starting offset for partition $\gls{p}_i$, such that this partition is scheduled to start at strict periodic instants $\gls{t}_i + \gls{k}\gls{T}_i,\ \gls{k}=0,1,\ldots\gls{K}_i -1 $.
+
+Assuming single execution windows, a partition executes in time windows $[ \gls{t}_i+\gls{k}\gls{T}_i,\ \gls{t}_i+\gls{k}\gls{T}_i+\gls{e}_i ],\,\gls{k}=0,1,\ldots\gls{K}_i$, and temporal segregation requires that these windows do not overlap for partitions in the same module.
+All timing variables are integers, and in particular periods and durations are strictly positive.
+Figure \ref{fig:timing-notation} shows this nomenclature on a partition schedule.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{\input{../thesis/graphics/schedule-non-harmonic.tex}}
+    \caption{Schedule with annotated timing variables. Partitions have non-harmonic periods.}
+    \label{fig:timing-notation}
+\end{figure}
+
+
+\subsection{Distribution constraints}
+
+The assignment of partition to modules is restricted by constraints which we call distribution constraints.
+\begin{description}
+    \item[Exclusion] -- Two partitions are said to be in exclusion if they cannot be assigned to the same module. 
+        This covers, but is not restricted to, the redundancy requirements of an avionic system, where safety-critical functionality must be replicated in different machines.
+        An exclusion constraint between partitions $\gls{p}_i,\gls{p}_j$ is denoted by $\gls{f}_i ≠ \gls{f}_j$.
+    \item[Inclusion] -- Two partitions are said to be in inclusion if they must be placed in the same module, which is useful for applications that are tightly coupled.
+        Similarly to exclusion, an inclusion constraint between partitions $\gls{p}_i, \gls{p}_j$ is denoted by $\gls{f}_i = \gls{f}_j$.
+    \item[Domain] -- A partition can only be assigned to a subset of all modules, called the partition's domain. 
+        That is the case in some architectures where applications require specific hardware that is only installed in some modules, like peripherals.
+        The domain $\gls{D}_i$ of a partition $\gls{p}_i$ is essentially a list of modules it can be assigned to. 
+        Formally, $\gls{D}_i\subseteq\gls{C}$ such that:
+        \begin{align}
+            \gls{c}_m \notin \gls{D}_i \implies \gls{f}_i\neq m.
+        \end{align}
+    \item[Memory] -- This is the only Knapsack constraint considered.
+        For each module, the sum of the partitions' memory sizes much not exceed that module's memory capacity:
+        \begin{align}
+            \sum_{\gls{p}_i\in\gls{Psub}_m}\gls{s}_i ≤ \gls{S}_m.
+        \end{align}
+    \item[Uniqueness] -- This constraint simply imposes that each partition is assigned to exactly one module.
+        Using $\gls{f}_i$ notation, this constraint is implicit, but with the abbreviated $\gls{Psub}_m$ notation it is expressed as:
+        \begin{align}
+            \left\{
+            \begin{aligned}
+                \gls{Psub}_1 \cup \gls{Psub}_2 \cup\ldots\cup\gls{Psub}_{\gls{Nc}} &= \gls{P} \\ 
+                ∀ \gls{c}_m, \gls{c}_n:\; \gls{Psub}_m \cap \gls{Psub}_n &= \emptyset.
+            \end{aligned}
+            \right.
+        \end{align}
+\end{description}
+
+\subsection{Communication constraints}
+\label{sec:comms}
+
+Inter-partition communications are often represented as processing chains, consisting of some kind of data being treated by successive partitions.
+One can think of data originating from a sensor or user input, being processed by one or more partitions, then originating a certain response in its final destination \cite{al2012strictly}.
+For this problem, we will consider such chains, but limit them to two partitions only, such that the time taken to process the data from its origin in the sender partition to its consumption in the receiver partition is bounded.
+
+A chain linking $\gls{p}_i$ to $\gls{p}_j$ is subject to a maximum delay $\gls{Eijmax}$, so we can describe all communication constraints by a matrix $[\glsuserii{Eijmax}]$, with entries being infinity when there is no communication between partitions. 
+The chain processing time is denoted $\gls{E}_{i,j}$, measured from the start of $\gls{p}_i$ to the end of $\gls{p}_j$, and must verify
+\begin{align}
+    \gls{E}_{i,j} ≤ \gls{Eijmax}.
+\end{align}
+This definition is agnostic to which jobs actually participate in the chain.
+If the two partitions have equal periods, then the delay between two consecutive jobs is constant, but if the periods are not equal but still harmonic, then $\gls{E}_{i,j}$ is defined as the shortest delay, and the chain can occur with a period equal to the larger of the two partition periods.
+When the two partition periods are non-harmonic, then for simplicity we consider also the smallest delay, and the chain shall be repeated with a period equal to the hyper-period of these two partitions.
+
+If the two communicating partitions are assigned to different modules, the network delay between these two modules must be considered.
+The network is characterized by a matrix $[\gls{Tau}]$ with elements $\gls{tau}_{m,n}$ of maximum \gls{ete} delays, which are upper bounds to the actual communication delay between modules $\gls{c}_m,\gls{c}_n$.
+Communications between partitions in the same module are not subject to network delays, thus we define $\gls{tau}_{m,m}=0,\ ∀ m$.
+We can also assume $\gls{tau}_{m,n}\ll\gls{T}_{i},\ ∀ m,n,i$, by at least one order of magnitude.
+
+The situation considered here is when the modules run synchronously.
+Intuitively, this means the two modules' schedules are aligned, and the instant when the message arrives in the second module is known.
+It can be the case that messages arrive at the destination partition after the instant where it starts to process incoming messages, meaning that the message will only be processed in the next job of this partitions, we say it is delayed for one period.
+It is also considered that all messages are sent and received in the end and beginning, respectively, of a partition's execution window.
+The earlier assumption $\gls{tau}_{m,n}\ll\gls{T}_{i}$ is meant to prevent messages from being delayed for more than one period.
+
+\subsection{Multiple window model}
+\label{sec:splitting}
+
+For the extended model, it is considered that partition jobs can be divided in more than one window of execution, hence we introduce an extended model with specific constraints such that the real-time requirements of these partitions are verified.
+Henceforth, this is referred to as \textquote{multiple windows}.
+
+Consider now that, for each job $\gls{k}$ of a partition $\gls{p}_i\in\gls{Psub}_m$, there are $\gls{M}_{i,k}$ execution windows, with lengths $( \gls{ech}_{i,k,1},\gls{ech}_{i,k,2},\ldots, \gls{ech}_{i,k,\gls{M}_{i,k}})$, such that:
+\begin{align}
+    \sum_{u=1}^{\gls{M}_{i,k}} \gls{ech}_{i,k,u} = \gls{e}_i + (\gls{M}_{i,k}-1)\gls{eps}_m,\;∀\gls{k}.
+\end{align}
+The windows are represented as $\gls{ch}_{i,k,u}$, and each has its own offset $\gls{tch}_{i,k,u}$, defined with respect to the hyper-period.
+Additionally, all windows that compose the partition are denoted by the set $\gls{chset}_i$.
+Since the first window at each job must be executed strictly periodically, its offset is not independent for all jobs, and is constricted by:
+\begin{align}
+    \gls{tch}_{i,k,1} = \gls{tch}_{i,1,1}+(\gls{k}-1)\gls{T}_i,\;∀\gls{k}.
+\end{align}
+
+The problem is greatly complicated because we require vector variables to completely represent the schedule, in particular because the number of jobs depends on the hyper-period, which is a function of the periods of all partitions assigned to that module, and the number and sizes of each window are also variable.
+
+We require that the partition splitting be done only in predetermined points in order to limit the problem complexity.
+These set of possible points for splitting is represented for each partition $\gls{p}_i$ as $\gls{B}_{i}$.
+Splitting a partition at job $\gls{k}$ in a subset of preemption points $\mathbf{b}\subseteq\gls{B}_i$ yields the window sizes $\mathbf{e}_{i,k} = (b_1, b_2-b_1+\gls{eps}_m, \ldots, b_N-b_{N-1}+\gls{eps}_m )$, where we consider without loss of generality that $\mathbf{b}$ has $N$ sorted elements.
+
+The response time of a task is defined as the time taken from the task activation to when the task completes, and clearly, this concept is not relevant if the execution is made in a single window.
+With more than one window per job, the partition finishes executing in instants $\braces*{t_{i, k, M_{i,k}}+e_{i,k,M_{i,k}}}$, which prompts the definition of the response time, $\gls{r}_{i}$, as
+\begin{align}
+    \gls{r}_{i} = \max_{\gls{k}}\braces*{\gls{tch}_{i, k, \gls{M}_{i,k}}+\gls{ech}_{i,k,\gls{M}_{i,k}} - \gls{tch}_{i,k,1}},
+\end{align}
+restricted by a relative deadline, $\gls{d}_i$:
+\begin{align}
+    \gls{r}_{i} ≤ \gls{d}_{i},
+\end{align} 
+which is measured with respect to to the job start, $\gls{tch}_{i,k,1}$.
+All partitions have the implicit deadline $\gls{d}_i ≤ \gls{T}_i$ to ensure that all windows finish before the next job starts.
+
+Figure \ref{fig:window-notation} sketches the new notation introduced in this section, where the windows corresponding to a subdivision of a job are represented with rounded edges.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{\input{../thesis/graphics/window-notation.tex}}
+    \caption{Multiple window execution notation.}
+    \label{fig:window-notation}
+\end{figure}
+
+\subsection{Schedulability}
+\label{sec:schedulability}
+
+From \textcite{korst1996scheduling}, we can derive a necessary and sufficient condition for two partitions, $\gls{p}_i,\gls{p}_j$, assigned to the same module to not overlap in time:
+\begin{align}
+    \gls{e}_i ≤ \mod\braces*{{\gls{t}_j-\gls{t}_i,\ \gls{g}_{i,j}}} ≤ \gls{g}_{i,j} - \gls{e}_j,
+    \label{eq:korst}
+\end{align}
+with $\gls{g}_{i,j} = \gcd{\braces*{\gls{T}_i, \gls{T}_j}}$, and $\mod$ denoting the modulo operator.
+We further define $\gls{l}_{i,j}≡\mod\braces{\gls{t}_j-\gls{t}_i,\ \gls{g}_{i,j}}$, called a latency delay, which represents the minimum delay between any two job starts of the two partitions.
+
+Schedulability can also be analysed with the processor usage fraction, $\gls{U}_m$, given by:
+\begin{align}
+    \gls{U}_m = \sum_{\gls{p}_i\in\gls{Psub}_m} \frac{\gls{e}_i}{\gls{T}_i}.
+    \label{eq:usage-fraction}
+\end{align}
+This can be seen as the percentage of time that a processor is active, and for single core processors the set is clearly not schedulable when $\gls{U}_m>1$.
+For the complete problem, it is infeasible if $\sum_{\gls{c}_m\in\gls{C}}\gls{U}_m>\gls{Nc}$.
+
+Using the definition of the latency delay, the chain processing time is given for $\gls{p}_i\in\gls{Psub}_m,\ \gls{p}_j\in\gls{Psub}_n$:
+\begin{align}
+    \gls{E}_{i,j} = 
+    \begin{cases}    
+        \gls{l}_{i,j} + \gls{e}_j, & \text{if } \gls{l}_{i,j}-\gls{e}_i ≥ \gls{tau}_{m,n} \\
+        \gls{l}_{i,j} + \gls{e}_j + \gls{T}_j, & \text{otherwise}    
+    \end{cases}
+    .
+    \label{eq:chain-feasibility}
+\end{align}
+
+\subsection{Optimization criterion}
+\label{sec:optimization-criterion}
+
+The optimization criterion chosen is one that aims to increase flexibility, by providing each partition a potential to increase its execution time.
+This is accomplished by leaving some idle time after each partition execution windows, and has some benefits: upon system maintenance or modification, one can add functionality to partitions, increasing their execution requirement, without having to recompute a new schedule; it mitigates uncertainty on the determined \glspl{wcet}; and possibly, it can allow for the usage of slower, cheaper hardware, where the execution requirements would be greater.
+
+The evaluation function used is the $\gls{alpha}$-parameter, which is the maximum factor that scales all partition execution requirements, such that the schedule becomes borderline valid \cite{al2010partition}.
+It can be defined for each module, or for the whole system:
+\begin{align}
+    &\gls{alpha}_m = \min\braces*{\frac{\gls{l}_{i,j}}{\gls{e}_i}},\,∀ \gls{p}_i,\gls{p}_j\in\gls{Psub}_m,\ i≠ j \\
+    &\gls{alpha} = \min_{\gls{c}_m\in\gls{C}}\braces*{\gls{alpha}_m}.
+\end{align}
+This yields each partition further execution time in proportion to the original execution requirement, which is appropriate since more complex applications with longer execution requirements are more likely to need to be updated and/or expanded.
+
+Figure \ref{fig:alpha} illustrates the optimization criterion. 
+Note that in this figure, $\gls{p}_2$ actually can increase its execution further, but the critical factor for the $\gls{alpha}$-parameter is $\gls{p}_1$.
+Also note the solution presented is sub-optimal, it is clear that shifting $\gls{p}_2$ to the right increases $\gls{alpha}$. 
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{\input{../thesis/graphics/alpha-sketch.tex}}
+    \caption{Effect of the $\glsfmttext{alpha}$-parameter.}
+    \label{fig:alpha}
+\end{figure}
+
+We also define the partition utility, $\gls{alpha-i}_i$:
+\begin{align}
+    w(i,j) &= \min\braces*{\frac{\gls{l}_{i,j}}{\gls{e}_i}, \frac{\gls{l}_{j,i}}{\gls{e}_j}} \label{eq:term-o} \\
+    \gls{alpha-i}_i(\gls{t}_i) &= \min_j\braces*{w(i,j)}, \label{eq:partition-utility}
+\end{align}
+for ${\gls{p}_j\in\gls{Psub}_m\smallsetminus\braces{\gls{p}_i}}$.
+It represents the module's $\gls{alpha}$-parameter, as a function of the offset $\gls{t}_i$, but considering only the partition pairs where $\gls{p}_i$ is involved, and all other offsets fixed.
+It is distinct from simply the execution potential for that partition, because it also accounts for the effect on the remaining partitions in that module, as seen in expression \ref{eq:term-o}.
+For partitions with multiple execution windows we consider that the execution potential is appended only to the last window at every job.
+
+\section{\glsfmttext{milp} formulation}
+\label{sec:milp}
+
+In this section we detail a \gls{milp} formulation that models the multiprocessor partition scheduling problem with communication constraints, but does not consider multiple execution windows.
+The classification as a \glsuseri{milp} comes from the fact that the formulation uses both integer variables (offsets and assignments) as well as real variables (the $\gls{alpha}$-parameter) involved in linear constraints.
+The formulation follows closely that in \cite{al2010partition}, and uses the natural encoding of binary variables, 1-true and 0-false.
+
+Let $\gls{a}_{i,m}$ be a binary variable expressing that partition $\gls{p}_i$ is assigned to module $\gls{c}_m$,
+\begin{align}
+    \gls{a}_{i,m} = 
+    \begin{cases}
+        1, & \gls{p}_i\in\gls{Psub}_m \\
+        0, & \text{otherwise}
+    \end{cases}.
+\end{align}
+With this reformulation of the partition assignment, The distribution constraints take the following form:  
+\begin{subequations}
+\begin{align}
+    \text{Uniqueness}:&\qquad ∀ i\ \sum_{m}\gls{a}_{i,m}=1. \\
+    \text{Memory}:&\qquad ∀ m\ \sum_{i}\gls{a}_{i,m}\gls{s}_{i}≤\gls{S}_m \\
+    \text{Exclusion}:&\qquad \gls{f}_i≠\gls{f}_j:\;∀ m\ \gls{a}_{i,m}≤ 1-\gls{a}_{j,m} \\
+    \text{Inclusion}:&\qquad \gls{f}_i = \gls{f}_j:\;∀ m\ \gls{a}_{i,m}=\gls{a}_{j,m} \\
+    \text{Domains}:&\qquad ∀ i\ \sum_{\gls{c}_m\in\braces{\gls{C}\smallsetminus\gls{D}_i}}\gls{a}_{i,m}=0.
+\end{align}
+\end{subequations}
+
+Temporal segregation is ensured by equation \ref{eq:korst}, which is non-linear due to the modulo function.
+Linearisation requires the introduction as free variables of the quotient from the division, $\gls{q}_{i,j} ≡\floor*{\frac{\gls{t}_j-\gls{t}_i}{\gls{g}_{i,j}}}$, which enables rewriting condition \ref{eq:korst} as:
+\begin{subequations}
+    \begin{empheq}{align}
+        &\gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}≥\gls{alpha}\cdot\gls{e}_i-Z\left(2-\gls{a}_{i,k}-\gls{a}_{j,k}\right) \\ 
+        &\gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}≤\gls{g}_{i,j}-\gls{alpha}\cdot\gls{e}_j+Z\left(2-\gls{a}_{i,k}-\gls{a}_{j,k}\right).
+    \end{empheq}
+\end{subequations}
+In this step, we also introduce the $\gls{alpha}$-parameter multiplying the partition executions, and these constraints should only apply to partitions in the same module, thus a \textquote{Big-M} constant $Z$ is used to trivially satisfy these inequalities when the partitions are not assigned to the same module.
+Bounds for $\gls{q}$ can be found by noting that $\gls{t}_i∈[0,1,\ldots,\gls{T}_i-\gls{e}_i]$, which gives:
+\begin{align}
+    \frac{\gls{e}_i-\gls{T}_i}{\gls{g}_{i,j}}-1< &\gls{q}_{i,j} ≤ \frac{\gls{T}_{j}-\gls{e}_{i}}{\gls{g}_{i,j}}.
+    \label{eq:bound-q}
+\end{align}
+Regarding the communications constraints, for each chain, let the new binary variable $\gls{x}_{i,j}$ denote that the chain being delayed for one period.
+This is used to eliminate the branching in equation \ref{eq:chain-feasibility}, having:
+\begin{align}
+    \gls{l}_{i,j}+\gls{e}_j+\gls{x}_{i,j}\gls{T}_j ≤ \gls{Eijmax}.
+    \label{eq:milp-chain}
+\end{align}
+The network delay affecting the two partitions is denoted by the auxiliary variable $\gls{tau-hat}_{i,j}$, defined as:
+\begin{align}
+    \gls{tau-hat}_{i,j} ≡ \sum_{\gls{c}_m,\gls{c}_n\in\gls{C}} \gls{a}_{i,m}\gls{a}_{j,n}\gls{tau}_{m,n},
+\end{align}
+but this is non-linear in terms of our free variables.
+Linearisation is done by introducing new binary variables $\gls{y}_{i,j,m,n}≡\gls{a}_{i,m}\land\gls{a}_{j,n}$, which yields:
+\begin{align}
+    \gls{tau-hat}_{i,j} = \sum_{\gls{c}_m,\gls{c}_n\in\gls{C}} \gls{y}_{i,j,m,n}\gls{tau}_{m,n}.
+\end{align}
+Finally, when a chain is not delayed for one period, then it must verify $\gls{l}_{i,j} + \gls{e}_i - \gls{tau-hat}_{i,j}≥0$, so we introduce 
+\begin{align}
+    \gls{l}_{i,j} + \gls{e}_i - \gls{tau-hat}_{i,j} + \gls{x}_{i,j}Z ≥ 0,
+\end{align}
+where again, the \textquote{Big-M} constant $Z$ is used to ignore this constraint when $\gls{Eijmax}$ is respected in equation \ref{eq:milp-chain} with the chain being delayed one period.
+
+The full model is:
+\begingroup
+\allowdisplaybreaks
+\begin{align*}
+    \max &\qquad\gls{alpha} \\
+    \text{s.t.} &\qquad 0≤\gls{alpha}≤\min_{\gls{p}_i\in\gls{P}}\braces*{\frac{\gls{T}_i}{\gls{e}_i}} \\
+    &   \sum_{\gls{c}_m\in\gls{C}}\gls{a}_{i,m} = 1;\; 0≤\gls{t}_i≤\gls{T}_i-\gls{e}_i \\
+    &   ∀\gls{c}_m∈\braces{\gls{C}\smallsetminus\gls{D}_i}:\ \gls{a}_{i,m}=0;\;\sum_{\gls{p}_i\in\gls{P}}\gls{a}_{i,m}\gls{s}_i ≤  \gls{S}_m\\
+    &   \gls{f}_i ≠ \gls{f}_j,\ ∀m:\ \gls{a}_{i,m}≤ \gls{a}_{j,m}\\
+    &   \gls{f}_i = \gls{f}_j,\ ∀m:\ \gls{a}_{i,m}=\gls{a}_{j,m} \\
+    &   j>i:\ \gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}≥\gls{alpha}\gls{e}_i-\\
+    &   -Z\left(2-\gls{a}_{i,m}-\gls{a}_{j,m}\right) \\ 
+    &   j>i:\ \gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}≤-\gls{g}_{i,j}\gls{alpha}\gls{e}_j-\\
+    &  -Z\left(2-\gls{a}_{i,m}-\gls{a}_{j,m}\right) \\
+    &   \frac{\gls{e}_i-\gls{T}_i}{\gls{g}_{i,j}} ≤ \gls{q}_{i,j} ≤ \frac{\gls{T}_j-\gls{e}_i}{\gls{g}_{i,j}} \\
+    &   0≤\gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}≤\gls{g}_{i,j} \\
+    &  \gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}+\gls{e}_j+\gls{x}_{i,j}\gls{T}_j≤\gls{Eijmax} \\
+    &   \gls{t}_j-\gls{t}_i-\gls{q}_{i,j}\gls{g}_{i,j}+\gls{e}_i-\sum_{\gls{c}_m,\gls{c}_n\in\gls{C}}\left(\gls{y}_{i,j,m,n}\gls{tau}_{m,n}\right) + \\
+    &   + \gls{x}_{i,j}Z ≥ 0 \\
+    &   \gls{y}_{i,j,m,n}≥ \gls{a}_{i,m}+\gls{a}_{j,n}-1 \\
+    &   \gls{y}_{i,j,m,n}≤ \gls{a}_{i,m};\; \gls{y}_{i,j,m,n}≤ \gls{a}_{j,n} \\
+    &   \gls{a}_{i,m}\in\braces*{0,1},\ \gls{t}_i\in\mathbb{Z},\ \gls{q}_{i,j}\in\mathbb{Z}\; \\
+    &   \gls{x}_{i,j}\in\braces*{0,1},\ \gls{y}_{i,j,m,n}\in\braces*{0,1}
+\end{align*}
+\endgroup
+
+\end{document}

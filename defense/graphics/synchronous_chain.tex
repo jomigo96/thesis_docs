@@ -1,0 +1,24 @@
+\begin{tikzpicture}[scale=1.0]
+	%\tikzstyle my grid=[style=help lines, color=blue!50, step=1.0, very thin, dashed]
+
+	\draw[style=module_style_1] (0,2) rectangle (12, 4) node[below left, black, opacity=1.0] {$c_1$};
+	\draw[style=module_style_2] (0,0) rectangle (12, 2) node[below left, black, opacity=1.0] {$c_2$};
+	\foreach \x in {0,...,12} {
+		\draw[color=gray, very thin, dashed] (\x, 0) --++(0, 5);
+	}
+
+    \draw[->, thick] (0,4) -- (12,4) node[above, yshift=0.1mm] {$t$};
+    \draw[->, thick] (0,0) -- (12,0) node[below, yshift=-0.1mm] {$t$};
+
+	
+	\draw[gray, fill=colorA] (0, 2.75) rectangle node[black] {$p_1$} (2, 3.25);
+	
+	\draw[gray, fill=colorB] (4, 0.75) rectangle node[black] {$p_2$} (5, 1.25);
+	\draw[gray, fill=colorB] (10, 0.75) rectangle node[black] {$p_2$} (11, 1.25);
+	
+	\draw[->] (2,3) -- (2,2) -- node[above] {$\tau_{1,2}$} (3,2);
+	\draw[->] (3,2) -- (3,1) -- (4,1);
+	
+	\draw[<->] (0, 5) -- node[above] {$E_{1,2}$} ++(5,0);
+
+\end{tikzpicture}

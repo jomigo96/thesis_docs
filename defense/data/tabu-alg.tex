@@ -1,0 +1,39 @@
+\begin{algorithmic}[1]
+	\Require $N\gets$ maximum number of iterations
+    \Require $\gamma\gets$ upper bound on the target function ($\alpha$) \Comment{Optional}
+	\Require $\texttt{state}\gets$ initial solution
+	\Require $\texttt{tabu\_size} \gets$ size of the tabu-list
+	\Require $\texttt{beam} \gets$ beam width \Comment{Number of neighbors expanded at each iteration}
+	\Procedure{Tabu\_Search}{$\texttt{state}$}
+		\State $\texttt{best} \gets \texttt{state}$
+		\State $\alpha_{\text{best}} \gets \gls{ev}(\texttt{state})$
+		\State $\texttt{current} \gets \texttt{state}$
+        \State $\texttt{tabu\_list} \gets $ a \glstext{lifo} queue with size $\texttt{tabu\_size}$, filled with dummy data
+		\State $i \gets 0$
+		\While{$i<N$}
+			\State $e_{\text{best}} \gets -\infty$
+            \For{$j\gets 1\ldots\texttt{beam}$}
+                \State $op\gets$\Call{random\_choice}{$\gls{mov}$, $\gls{sw}$, $\gls{sh}$, $\gls{sl}$}
+                \State $\texttt{candidate} \gets op(\texttt{state})$
+                \State $\gls{lop}(\texttt{candidate})$
+                \State $e \gets \gls{ev}(\texttt{candidate})$ 
+				\If{$e>e_{\text{best}}$ and $\texttt{candidate}∉\texttt{tabu\_list}$}
+                    \State $\texttt{next} \gets \texttt{candidate}$
+					\State $e_{\text{best}} \gets e$
+				\EndIf
+            \EndFor
+            \State $\texttt{state} \gets \texttt{next}$
+			\State push \texttt{state} into \texttt{tabu\_list}
+			\State pop from \texttt{tabu\_list}
+			\If{$e_{\text{best}} > \alpha_{\text{best}}$}
+				\State $\texttt{best} \gets \texttt{state}$
+				\State $\alpha_{\text{best}} \gets e_{\text{best}}$
+			\EndIf
+			\If{$\alpha_{\text{best}} \geq \gamma$}
+				\State \Return $\texttt{best}$
+			\EndIf
+			\State $i\gets i+1$
+		\EndWhile
+		\State \Return $\texttt{best}$
+	\EndProcedure
+\end{algorithmic}

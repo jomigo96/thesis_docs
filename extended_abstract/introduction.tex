@@ -1,0 +1,113 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\section{Introduction}
+
+Avionic systems have traditionally followed a federated architecture, with each component or subsystem having its dedicated hardware and software, in what is defined as \glspl{lru}.
+Suppliers were responsible for developing both the hardware and software, and supply it as its own self-contained black-box component.
+This \textquote{one function -- one computer} concept coupled with redundancy provided high safety and reliability.
+Applications have guaranteed, deterministic access to processor resources, and \gls{io} with bounded latency and jitter.
+Maintenance is straightforward and inexpensive, as \glspl{lru} can be readily replaced by equivalent ones.
+Most importantly, with loosely coupled \glspl{lru}, critical functions cannot be impaired by low-criticality functions, and the modularity increases fault containment.
+
+However, the disadvantages of the federated architecture are evident.
+With a federated architecture, a function being added to the avionic system requires the addition of one of these \glspl{lru}, and this quickly escalates the mass, volume, cost and power consumption of the entire avionic system to infeasible amounts.
+Regarding costs, functions sharing a processor must be certified to the highest criticality level of those functions, and this encourages the usage of many processors with decreased utilization.
+On the other hand, modern processors have far more capability than a single critical function requires, and this constitutes an inefficient usage of resources \cite{mairaj2015preferred}.
+
+The \gls{ima} paradigm is the aviation industry's response to these problems, whose architecture principle relies on resource sharing between generally unrelated components, including computing resources, power, and communication media, as roughly demonstrated in figure \ref{fig:ima-federated}.
+Functions which were previously implemented in isolated \glspl{lru} now coexist on shared hardware, and in order to maintain isolation between components, \gls{ima} adopts robust time and space partitioning between applications.
+Space partitioning protects the application's data from corruption by unrelated applications that share the same hardware, and time partitioning ensures the required access to computing resources and communication channels \cite{ananda2013arinc}.
+Due to this, loosely coupled avionic applications are designated as partitions in the context of \gls{ima}.
+\glsxtrlong{a653} defines a standard interface between the \gls{rtos} and partitions, being an enabler of the \gls{ima} architecture.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{\input{../thesis/graphics/ima-scheme.tex}}
+    \caption{Overview of Federated and \glsfmtlong{ima}.}
+    \label{fig:ima-federated}
+    \glsadd{ima}
+\end{figure}
+
+Current developments on the \gls{ima} concept aim to further abstract the applications from the hardware.
+In classic \gls{ima}, peripherals such as sensors and actuators are connected directly to the \glspl{cpiom}, the equivalent of \glspl{lru} in this architecture, that often must contain specific hardware to interact with these.
+The introduction of \glspl{rdc} allows to connect the peripherals directly to the avionic network.
+These are hardware devices that carry the necessary drivers for these peripherals and perform their \gls{io} to the avionic network, hence, the \glspl{cpiom}, now simply called \glspl{cpm}, do not require specific hardware and are further standardized.
+Another advantage of this is the reduced cabling needed, since \glspl{cpm} are usually confined to the avionics bay, potentially far from the peripherals.
+These systems are often called \gls{dima} since they distribute \gls{io} across the aircraft \cite{barros}.
+
+\Textcite{mairaj2015preferred} compares federated and \gls{ima} architectures having surveyed 35 projects that underwent the transition.
+The results show weight reductions of around \SI{50}{\percent} for all cases, volume reductions of \SIrange{30}{40}{\percent}, power savings of \SIrange{25}{30}{\percent}, and \gls{mtbf} increasing by a factor of \numrange{1.4}{3.8}.
+Nowadays, all new passenger aircraft models employ a variant of this architecture.
+
+\subsection{Problem description}
+
+An \gls{ima} system is composed of several \glspl{cpm} with each hosting a set of partitions, with a static, cyclic partition schedule.
+The schedule is static because it is configured at build time, and does not change at runtime.
+A partition is forcefully stopped at the end of its allocated time window, and control transferred to the next one to ensure fault containment.
+It is cyclic because a representative unit is continuously repeated while the system is active.
+
+Scheduling partitions in \gls{ima} involves decisions in two domains.
+Firstly, \gls{ima} makes it possible that partitions are capable of running on many if not all available \glspl{cpm}, but the schedule restricts that each must run on only one.
+Part of the scheduling problem consists in assigning partitions to different processors, verifying their real-time constraints.
+These can include memory, stack-size, bandwidth, as well as other constraints related to redundancy management.
+Also, each partition must be allocated time windows to execute while also verifying time segregation with other partitions in the same module, and being able to communicate with other elements in the avionic network.
+
+Partitions are characterized by a period and an execution requirement, which are measured in integer units of time, noting that the highest precision for time measurements in real-time computing systems is the CPU clock period.
+Partitions are executed strictly periodically, which means that the time separating two consecutive execution windows (or instances, jobs) of the same partition is exactly the partition period.
+This strict periodicity is common in real-time systems as it is required by control loops for example, but it must be noted that the \gls{a653} standard does not enforce this. 
+What is required is that there is a \textquote{periodic processing start}, a point in a partition schedule coinciding with the beginning of a window where the internal periodic process scheduling is allowed to start \cite{arinc653}.
+The execution requirement is taken as the \gls{wcet} of the partition and can be provided by the application developer, or determined through testing since it is dependent on the hardware.
+The smallest unit of repetition of the schedule in one \gls{cpm} is called the \gls{maf}, or in other words the hyper-period of the partitions scheduled in that \gls{cpm}.
+This is the smallest time window that is indefinitely repeated, which must guarantee that at least one partition time window be allocated to each partition in the duration of one \gls{maf}. 
+An example of a partition schedule for one \gls{cpm} is shown in figure \ref{fig:timing-notation}.
+
+Given the strict periodicity of partition executions, once an execution window is defined, all subsequent ones are implicitly defined, thus the starting time offset with respect to the \gls{maf} is sufficient to fully describe the schedule of a partition.
+The typical partition scheduling problem is combining this with distributing the partitions among the available \glspl{cpm}, complying with some constraints.
+This is part of the problem we aim to solve, and the constraints considered are exclusion, inclusion (or cohabitation), domain, memory, temporal segregation and communication constraints.
+Furthermore, this is transformed into a \gls{cop}, by the defining an optimization criterion based on flexibility, as introduced in \cite{al2010partition}, which intuitively consists in providing each partition with room to increase its execution window without interfering with other partitions.
+In addition to this, we also investigate the possibility of splitting partition execution in multiple windows.
+
+\subsection{Related work}
+\label{sec:related}
+
+The first efforts to automate partition scheduling for \gls{ima} is that of \textcite{lee2000scheduling}, which lay a framework for the deployment of this task in the system integration phase.
+Some approaches attempt to minimize the number of processors used, in the style of the bin-packing problem.
+See for example \textcite{verschae2010scheduling} and \textcite{eisenbrand2010solving}.
+
+Our approach is most similar to \textcite{al2012strictly}, who aim to minimize the worst-case scalability potential of every partition, but they do not consider communication constraints.
+They present a \gls{milp} formulation which fails to provide solutions in acceptable time, and develop a heuristic based on Game Theory.
+The same heuristic is improved in \textcite{pira2016line}.
+
+Other methodologies include that of \textcite{beji2014smt} who use \gls{smt} and aim to minimize integration costs, and that of \textcite{blikstad2018optimisation}, which uses a \gls{milp} formulation to model low-level system requirements without a particular optimization goal.
+
+Also in the scheduling domain but not related to \gls{ima} or real-time systems, we refer to \textcite{pinedo2008scheduling}.
+Some methodologies which inspire the present work include scheduling with generic optimization algorithms, including \gls{sa}, Tabu-search and genetic algorithms.
+
+\subsection{Contributions}
+
+The contributions of this paper are as follows:
+\begin{itemize}
+    \item A comprehensive mathematical model of the system is provided, containing distribution constraints, which restrict the assignment of partitions to modules, communication constraints, via limiting the delay in a chain of partition executions, and also a multiple window model is introduced, which allows partition execution to be divided in multiple windows, where only some of them must be scheduled strictly periodically.
+    \item A \gls{milp} formulation describes a subset of the overall problem.
+    \item A sequential assignment algorithm and a \gls{csp} formulation are developed to produce an initial assignment of partitions to modules.
+    \item A local optimization algorithm based on Game Theory \cite{al2012strictly} is used to improve the schedule for a single model, and it is extended to accommodate inter-partition communications and multiple windows.
+    \item Stochastic optimization algorithms are added to complement local search and explore larger portions of the search space.
+\end{itemize}
+
+\subsection{Outline}
+
+This work was developed in collaboration with \href{https://www.gmv.com/en/}{GMV}, a supplier of an \gls{a653}-compliant \gls{rtos} named XKY.
+We have presented the fundamental concepts and the necessity for partition scheduling.
+Section \ref{sec:problem} is dedicated to the mathematical representation of the problem, and a \gls{milp} formulation which describes part of the overall problem is included.
+Section \ref{sec:implementation} describes the algorithms and strategies developed to heuristically solve generic problem instances, with considerations for computational performance, and section \ref{sec:results} evaluates these methodologies.
+Section \ref{sec:conclusion} is the conclusion to this work.
+
+\end{document}

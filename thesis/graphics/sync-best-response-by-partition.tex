@@ -1,0 +1,15 @@
+\begin{tikzpicture}
+\begin{axis}[
+        ylabel={$t$ [\si{\milli\second}]},
+        ylabel style={rotate=-90},
+        xlabel={$N_p$},
+        ymajorgrids,
+    ]
+
+    \addplot[
+        color=colorC,
+        mark=square*,
+    ] table [col sep = comma, x index = 0, y index = 1] {sync-best-response-by-partition.csv};
+
+\end{axis}
+\end{tikzpicture}

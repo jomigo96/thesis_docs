@@ -1,0 +1,60 @@
+\begin{tikzpicture}[scale=0.9]
+	%\tikzstyle my grid=[style=help lines, color=blue!50, step=1, very thin, dashed]
+	%\draw[style=my grid] (-1, -0.5) grid (26,6);	
+
+	\pgfmathsetmacro\h{0.5};
+	
+	\foreach \x in {1,...,23} {
+		\draw[dashed, gray, thin] (\x, -0.6) -- (\x, 5.3);
+	}
+	
+	\pgfmathsetmacro\y{4};
+	\foreach \x in {0, 6, 12, 18} {
+		\pgfmathsetmacro\r{\x+1}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorA] (\x, \y) rectangle node[black] {$p_1$} (\r, \t);
+		\draw[gray, fill=colorA] (\x, 0) rectangle node[black] {$p_{1}$} (\r, \h);
+	}
+	\pgfmathsetmacro\y{3};
+	\foreach \x in {7, 19} {
+		\pgfmathsetmacro\r{\x+2}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorB] (\x, \y) rectangle node[black] {$p_2$} (\r, \t);
+		\draw[gray, fill=colorB] (\x, 0) rectangle node[black] {$p_2$} (\r, \h);
+	}
+	\pgfmathsetmacro\y{2};
+	\foreach \x in {1, 9, 17} {
+		\pgfmathsetmacro\r{\x+1}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorC] (\x, \y) rectangle node[black] {$p_3$} (\r, \t);
+		\draw[gray, fill=colorC] (\x, 0) rectangle node[black] {$p_3$} (\r, \h);
+	}
+	\pgfmathsetmacro\y{1};
+	\foreach \x in {2, 14} {
+		\pgfmathsetmacro\r{\x+3}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorD] (\x, \y) rectangle node[black] {$p_4$} (\r, \t);
+		\draw[gray, fill=colorD] (\x, 0) rectangle node[black] {$p_4$} (\r, \h);
+	}
+	\foreach \x/\s in {5/1, 10/2, 13/1, 21/3} {
+		\pgfmathsetmacro\r{\x+\s}
+		\draw[gray, fill=hwgray] (\x, 0) rectangle node[black] {Idle} (\r, \h);
+	}	
+
+	\draw[<->, thick] (0,-0.6) -- node[below] {$H_m$} (24, -0.6);
+	
+	\foreach \x in {0, 24} {
+		\draw[thick, dashed] (\x, -0.6) -- (\x, 5.3);
+	}
+	
+	\draw[thick, ->] (0, 1.25) -- node[above] {$t_4$} (2, 1.25);
+	\draw[thick, ->] (0, 2.25) -- node[above] {$t_3$} (1, 2.25);
+	\draw[thick, ->] (0, 3.25) -- node[above] {$t_2$} (7, 3.25);
+	
+	\draw[thick, <->] (2, 5.3) -- node[above] {$e_4$} (5, 5.3);
+	\draw[thick, <->] (6, 5.3) -- node[above] {$e_1$} (7, 5.3);
+	
+	\draw[thick, <->] (9, 5.3) -- node[above] {$T_3$} (17, 5.3);
+	
+
+\end{tikzpicture}

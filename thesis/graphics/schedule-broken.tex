@@ -1,0 +1,42 @@
+\begin{tikzpicture}[scale=1.0]
+	%\tikzstyle my grid=[style=help lines, color=blue!50, step=1, very thin, dashed]
+	%\draw[style=my grid] (-1, -0.5) grid (21,3);	
+
+	\foreach \x in {0, 4, 8, 12} {
+		\pgfmathsetmacro\r{\x+1}
+		\draw[gray, fill=colorA] (\x, 0.5) rectangle node[black] {P1} (\r, 1);
+		\draw[gray, fill=colorA] (\x, -0.7) rectangle node[black] {P1} (\r, -0.2);
+	}
+	\foreach \x in {1, 9} {
+		\pgfmathsetmacro\r{\x+2.75}
+		\pgfmathsetmacro\l{\x+1.5}
+		\draw[gray, fill=colorB] (\x, 0.5) -- (\x, 0) -- (\r, 0) arc[start angle=-90, end angle=90, radius=0.25] -- cycle;
+		\draw[gray, fill=colorB] (\x, -0.2) -- (\x, -0.7) -- (\r, -0.7) arc[start angle=-90, end angle=90, radius=0.25] -- cycle;
+		\draw (\l, 0.25) node {P2};
+		\draw (\l, -0.45) node {P2};
+	}
+	\foreach \x in {5, 13} {
+		\pgfmathsetmacro\s{\x+0.25}
+		\pgfmathsetmacro\l{\x+0.5}
+		\pgfmathsetmacro\r{\x+1}
+		\draw[gray, fill=colorB] (\s, 0.5) arc[start angle=-270, end angle=-90, radius=0.25] -- (\r, 0) -- (\r, 0.5) -- cycle;
+		\draw[gray, fill=colorB] (\s, -0.2) arc[start angle=-270, end angle=-90, radius=0.25] -- (\r, -0.7) -- (\r, -0.2) -- cycle;
+		\draw (\l, 0.25) node {P2};
+		\draw (\l, -0.45) node {P2};
+	}
+	\foreach \x/\s in {6/2, 14/2} {
+		\pgfmathsetmacro\r{\x+\s}
+		\draw[gray, fill=hwgray] (\x, -0.7) rectangle node[black] {Idle} (\r, -0.2);
+	}
+	
+	\foreach \x in {0, 8, 16} {
+		\draw[dashed, gray, thin] (\x, -1.4) -- (\x, 1.7);
+	}
+	
+	\draw[<->, thick] (0, 2.3) -- node[above] {Partition 1 period} (4, 2.3);
+	\draw[<->, thick] (1, 1.9) -- node[below] {Partition 2 period} (9, 1.9);
+	\draw[<->, thick] (0, -1.4) -- node[below] {\large MTF} (8, -1.4);
+	\draw[<->, thick] (8, -1.4) -- node[below] {\large MTF} (16, -1.4);
+	%\draw[|->, very thick] (0,-1.1) -- (24, -1.1) node[below] {$t$};
+
+\end{tikzpicture}

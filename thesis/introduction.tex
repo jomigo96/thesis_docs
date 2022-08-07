@@ -1,0 +1,89 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\chapter{Introduction}
+
+\section{Motivation}
+
+In the past decades, the avionic industry adopted the \gls{ima} architecture, replacing the older federated architectures.
+
+In federated architectures, each avionic functionality is deployed as an independent black-box component called a \gls{lru}, with its own dedicated hardware and software.
+Despite providing excellent safety and fault containment, each further addition of a function to the system requires adding a new \gls{lru}, and this escalates the mass, weight, and power requirements of the avionic system, not to mention it being an inefficient usage of resources.
+With the industry demanding more and more functionality from avionic systems, the federated concept became unsustainable \cite{mairaj2015preferred}.
+
+The \gls{ima} paradigm is the aviation industry's response to these problems, whose architecture principle relies on resource sharing between generally unrelated components, including computing resources, power, and communication media, as roughly demonstrated in figure \ref{fig:ima-federated}.
+Functions which were previously implemented in isolated \glspl{lru} now coexist on shared hardware, and in order to maintain isolation between components, \gls{ima} adopts robust time and space partitioning between applications.
+Space partitioning protects the application's data from corruption by unrelated applications that share the same hardware, and time partitioning ensures the required access to computing resources and communication channels \cite{ananda2013arinc}.
+Due to this, loosely coupled avionic applications are designated as partitions in the context of \gls{ima}.
+
+\begin{figure}
+    \centering
+    \resizebox{!}{8cm}{\input{graphics/ima-scheme.tex}}
+    \caption{Simple overview of Federated and \glsfmtlong{ima}.}
+    \label{fig:ima-federated}
+    \glsadd{ima}
+\end{figure}
+
+Time and space partitioning is ensured through compliance with the \gls{a653} standard, which defines a standardized interface between partitions and an underlying \gls{rtos}, satisfying all safety-critical requirements of the avionic applications \cite{prisaznuk2008arinc}.
+For this purpose, \gls{a653} requires that partitions execute in a static, periodic manner.
+Unlike regular operating systems, where processes are scheduled at runtime, the time slots allocated to partitions are predefined in a static schedule, and repetition is deterministic because this schedule is periodic.
+A special characteristic of these schedules, imposed by \gls{a653}, is that partitions should execute non-preemptively in strictly periodic intervals, or in other words, there must be no jitter in the time between different executions of the same partition, providing it unique access to resources in its given time budget.
+This, coupled with distributing partitions among the available hardware, all while verifying the functional requirements of the avionic system, consists in a complex multiprocessor scheduling problem, which for long has been known to be NP-complete \cite{korst1996scheduling}.
+
+The schedule is determined by the system integrator at the system integration phase.
+It consists in gathering all system characteristics and requirements from suppliers, distributing partitions over the available hardware, and scheduling them in a strictly periodic manner, such that, on one hand, there is no temporal overlap between two partitions in the same module, and also other requirements related to inter-partition communications and an appropriate redundancy configuration are met.
+The resulting schedule is then encoded in a specific XML format and integrated in the system configuration files at build time, with any modifications requiring the complete reintegration of the system.
+This process is insufficiently automated in industry, from the modelling of the problem requirements, to the scheduling itself, and its certification.
+Overall, system integration is often a long, manual process, consequently error-prone and inefficient, with modern systems requiring over \num{40000} configuration entries.
+
+Furthermore, as the \gls{ima} architecture matures, there is more demand to optimize this process, shorten development cycles, and provide more flexible systems.
+For this, partition scheduling is a key component, and modern approaches aim not only to satisfy all system requirements, but also to optimize them in a relevant way.
+
+Partition scheduling, in its simpler form, consists in assigning partitions to the available processors, and defining a relative starting time offset, which implicitly defines all execution windows given the strict periodicity of the setting.
+This must be done in a way that delivers an appropriate redundancy configuration; hardware resources are not exceeded; time and space partitioning are maintained, meaning that execution windows in the same module cannot overlap; and other functional requirements are assured by guaranteeing timely communication between partitions.
+
+\section{Objectives}
+
+The purpose of this dissertation is to provide a methodology for solving the partition scheduling problem in \gls{ima}, that can cope with the increased complexity that modern avionic systems are experiencing.
+Furthermore, we are interested not only in providing valid solutions, but also in finding one that provides the system with more flexibility, thus an optimization criterion is considered which aims to increase system flexibility and scalability by allowing the expansion of partition execution windows without having to completely reschedule the whole system.
+%In practice, this is an extensive \gls{cop}, NP-complete in the strong sense \cite{al2012strictly} meaning optimal algorithms are intractable.
+
+This thesis was produced in collaboration with \href{https://www.gmv.com/en/}{GMV}, inserted in its Aerospace and Defence department.
+GMV is the supplier of an \gls{a653}-compliant \gls{rtos} named XKY, and the goal is also to develop a partition scheduler to be integrated in the configuration tool suite for this product.
+
+\section{Contributions}
+
+The contributions of this dissertation are as follows:
+\begin{itemize}
+    \item A comprehensive mathematical model of the system is provided, containing distribution constraints, which restrict the assignment of partitions to modules, communication constraints, via limiting the delay in a chain of partition executions, and also a multiple window model is introduced, which allows partition execution to be divided in multiple windows, where only some of them must be scheduled strictly periodically.
+    \item A \gls{milp} formulation describes a subset of the overall problem.
+    \item A sequential assignment algorithm and a \gls{csp} formulation are developed to produce an initial assignment of partitions to modules.
+    \item A local optimization algorithm based on Game Theory \cite{al2012strictly} is used to improve the schedule for a single model, and it is extended to accommodate inter-partition communications and multiple windows.
+    \item Stochastic optimization algorithms are added to complement local search and explore larger portions of the search space.
+\end{itemize}
+
+\section{Thesis outline}
+
+The present chapter introduces the motivation and objectives for this dissertation.
+The relevant concepts already mentioned in the Introdduction, like federated and \glsxtrlong{ima}, time and space partitioning, and \gls{a653} are described in detail in chapter \ref{sec:background}.
+Also in this chapter, the partition scheduling problem is described, and the chapter concludes with a review of literature on the subject.
+
+Chapter \ref{sec:problem} is dedicated to the mathematical representation of the problem, detailing the free variables, problem variables, constraints and optimization criteria.
+A \gls{milp} formulation describes part of the overall problem.
+
+Chapter \ref{sec:implementation} describes the algorithms and strategies developed to heuristically solve generic problem instances, with considerations for computational performance.
+
+In chapter \ref{sec:results}, the developed algorithms are evaluated, test cases of varying dimension are defined, and the performance of the scheduling tool is analysed, by comparing it with exact approaches and related work.
+
+Chapter \ref{sec:conclusion} is the conclusion to this dissertation, and includes a discussion about future work.
+Also included in annex are pseudo-code for optimization algorithms (appendix \ref{an:algs}), and the complete dataset of our test cases (appendix \ref{an:test-cases}).
+
+
+\end{document}

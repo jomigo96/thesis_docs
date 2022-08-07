@@ -1,0 +1,151 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\section{Methodology}
+\label{sec:implementation} %implementation is the old chapter name
+
+This section describes the heuristic methods developed to solve the problem.
+We elect to divide the overall problem into three smaller subproblems, and employ specialized methods for tackling each of these.
+The three subproblems are: assigning partitions to modules to verify the distribution constraints, performing local optimization on a single module, and performing global optimization.
+
+\subsection{Partition assignment}
+\label{sec:constraint-programming}
+
+The partition assignment problem aims to distribute the partitions among the available modules in a way that verifies the distribution constraints.
+Following this, the first step is to find one viable assignment of partitions to modules, which essentially consists in assigning values to $\gls{f}_i,\ ∀\gls{p}_i∈\gls{P}$, such that an initial solution can be created.
+At the same time, tackling this reduced problem allows us to quickly prove infeasibility for certain problem instances without entering the additional complexity of considering the actual schedules.
+
+The chosen approach is to use constraint programming, which is a generic framework to solve combinatorial problems like this one, modelling as a \gls{csp}.
+The formulation as a \gls{csp} is straightforward from the \gls{milp} model, but here we rearrange it to use $\gls{f}$ nomenclature.
+$\gls{delta}(x)$ denotes the Kronecker delta.
+\begin{description}
+    \item[Variables]: $\gls{f}_i,\ ∀\gls{p}_i\in\gls{P}$
+    \item[Domains]:  $\braces*{m},\ ∀\gls{c}_m\in\gls{D}_i$ 
+    \item[Constraints]:
+        \begin{alignat}{1}
+            \text{memory:}    \qquad & \forall m\sum_{i}\braces*{\gls{s}_i\cdot\gls{delta}\left( \gls{f}_i-m \right)} ≤ \gls{S}_m \label{eq:mem-csp-constraint} \\
+            \text{inclusion:} \qquad & \gls{f}_i=\gls{f}_j \label{eq:inc-csp-constraint} \\
+            \text{exclusion:} \qquad & \gls{f}_i≠\gls{f}_j \label{eq:exc-csp-constraint}
+        \end{alignat}
+\end{description}
+
+This problem can be solved using a general purpose \gls{csp} search algorithm.
+One advantage of \glspl{csp} is they are able to perform search using generalized heuristics not dependant on the problem structure.
+Another important characteristic of using backtracking search to solve this \gls{csp} is completeness, as we are able to prove infeasibility of the whole partition scheduling problem if the partition assignment subproblem is infeasible.
+Therefore, the first step in the scheduling tool will be to find a valid solution to this subproblem.
+
+Other options for solving this subproblem would be using an \gls{ilp}, or a sequential assignment algorithm, the latter of which was verified to be effective for loosely constricted problem instances.
+
+\subsection{Local optimization}
+\label{sec:local-op}
+
+Optimizing the offsets for all partitions such that $\gls{alpha}$ is maximized is a complex problem.
+However, optimizing the offset of one partition in the schedule while taking the other partition offsets as fixed is feasible.
+The strategy is to iteratively update the offset of each partition to a better value, and due to the similarities with game theory, the procedure is called the best response algorithm.
+This solution was studied separately in \cite{al2012strictly, pira2016line}.
+
+Consider the partitions players in a game.
+The game is played in turns, each player updates its strategy knowing the current strategy for the other players, and the game is played until the strategies converge.
+In particular, each player chooses the offset that maximizes its utility (defined in equation \ref{eq:partition-utility}), which is the factor by which all executions can be multiplied without overlapping with its own execution window.
+Since partitions choose their offset independently, this game is categorically non-cooperative, and the optimal solution lies on an equilibrium point, which in game theory is known as a Nash Equilibrium Point, from \textcite{nash1951non}.
+However, a partition's utility maximizes not only the partition's window of execution, but also other partitions' interactions with its own, therefore, it has a cooperative trait.
+This is an important aspect that guarantees that this procedure converges to one of these equilibrium points, and additionally, this point will be at a local optimum with respect to the $\gls{alpha}$-parameter.
+The converse is also true, any local optimum solution will be an equilibrium point.
+
+In general, problem instances have many equilibrium points, which are all locally optimal solutions to the scheduling problem.
+Finding the optimal solution consists in finding the best of these equilibrium points, and is achieved by providing different starting points to the best response algorithm.
+
+The introduction of chains restricts which offsets are valid, which has the effect of speeding up convergence since it restricts the problem further, however, it also increases the number of equilibrium points, making the procedure more dependant on the initial state.
+Using multiple windows, we must consider each individual window as a separate player, with the exception of all windows with $u=1$, which are not independent.
+
+Overall, the best response algorithm has complexity $\bigO(NA^{N-1})$, where $N$ is the number of players and $A$ is the number of strategies per player \cite{durand2016complexity}.
+
+\subsubsection{Linear search}
+\label{sec:line}
+
+The \textquote{best value} procedure consists in finding $\gls{t}_i$ which maximizes utility $\gls{alpha-i}_i$ of a given partition.
+We call it linear search because linear programming can be used to compute this value.
+This is trivially solved by computing $\gls{alpha-i}_i$ for all possible values of $\gls{t}_i$ and choosing the best one, however, this procedure will be repeated many times inside the local and global search procedures, therefore a faster method is paramount.
+
+The solution to this problem, as investigated in \textcite{al2012strictly, pira2016line}, is to determine intersection points of the partition utilities based on knowledge from the solution set, and compute the partition utility only in these intersection points.
+The solution set is composed of adjacent polyhedra, with the maximum value on each polyhedra being located at an intersection of an ascending and descending line of the partition utility.
+
+The actual calculation of the utility is done in $\bigO(\gls{Np})$ time (see equation \ref{eq:partition-utility}), therefore the exhaustive search runs in $\bigO(\gls{Np}\gls{T}_i)$.
+For the method based on intersection points, we first note that for $N$ constraining partitions, there will be $N^2$ intersection points in each polyhedron, with the number of polyhedra being trivially bounded by $\gls{T}_i$, so actually this algorithm runs in $\bigO(\gls{T}_i\gls{Np}^3)$.
+Despite this asymptotic time complexity being clearly worse, for usual problem instances with limited $\gls{Np}$, we verify that this version is superior to exhaustive search, as will be seen in section \ref{sec:results}.
+
+The effects of chains in liner search is constricting the partition offsets to valid regions that verify the maximum processing time.
+Multiple windows, however, degenerate the solution set and thus linear search cannot be applied; for these we must use exhaustive search.
+
+\subsubsection{Parallel best response}
+\label{sec:parallel}
+
+Parallel best response is what we define by applying local optimization to several modules simultaneously, motivated by the fact that when there are chains spanning two modules, their respective schedules are not independent.
+The approach in this case is to take all partitions assigned to a certain group of modules as the set of players, and proceed with the best response algorithm as normal, with the new nuance being that for determining the best value, only the partitions in the same module should be considered.
+
+Preceding this, an extra step is needed, which is to determine which modules need to be optimized in parallel and which can be optimized independently.
+If we form an undirected graph where the modules are vertices and any chain creates an edge between the modules where the partitions are assigned to, then this problem consists in enumerating all unconnected subgraphs, solvable in linear time with depth-first search, for example.
+
+\subsection{Global optimization}
+\label{sec:global}
+
+Local optimization allows us to efficiently generate schedules for a single module after having defined the partitions that are assigned to this module as well as their configuration with respect to windows.
+The followed strategy is based on stochastic optimization algorithms, in particular we implement \gls{sa}, Tabu-search and a genetic (or evolutionary) algorithm.
+These are of course classified as local search algorithms, but the fact that we are applying them only to a subtask in our problem, namely exploring starting points for a dedicated local optimization procedure, makes it adequate to use them for global search.
+These algorithms operate on a complete solution and gradually improve it, and this allows for the usage of the modularity of the local optimization procedure to improve only the needed modules.
+Another reason for this choice is we lack a proper way to evaluate partial solutions, that is, not all problem variables being assigned a value, which means a constructive algorithm is not appropriate.
+
+\subsubsection{Operators}
+\label{sec:operators}
+
+Operators allow us to move from a state, $\gls{St}$, which is a not necessarily valid solution, represented by a complete assignment of our problem variables, to another state differing by only some values of these variables.
+The operators apply to states and produce a new state, as $op(\gls{St}_1)→\gls{St}_2$.
+Six operators are defined and detailed below: the move operator, $\gls{mov}(\gls{St}, \gls{gr}, m, n)$, the swap operator, $\gls{sw}(\gls{St}, \gls{gr}_1, \gls{gr}_2, m, n)$, the shuffle operator, $\gls{sh}(\gls{St}, m)$, the local optimization operator, $\gls{lop}(\gls{St}, \gls{mgr})$, the slice operator, $\gls{sl}(\gls{St}, i)$, and the crossover operator, $\gls{cross}(\gls{St}_1,\gls{St}_2)$, which is the only binary operator and combines two states to produce a new one.
+
+The move operator changes the assignment of a group of partitions, $\gls{gr}⊆\gls{P}$, essentially moving from one module to the other.
+When applying it, we can use a few heuristics. 
+Most importantly, we can attempt to move a partition away from the most constrained module, but also, in order to comply with the distribution constraints, partitions subject to $\gls{f}_i=\gls{f}_j$ should be moved in the same group.
+
+The swap operator swaps the assignment of two partitions, or two groups of partitions, virtually chaining two move operators.
+This operator is useful for reaching certain states without passing through worse intermediary states, having either low $\gls{alpha}$ or just invalid distribution constraints.
+
+The shuffle operator provides a new start point for the local optimization procedure, by assigning random offsets to all partitions and all partition windows assigned to a certain module.
+
+The local optimization operator is essentially the local optimization described before, applicable to a group of modules in parallel, or a single module as needed.
+
+The slice operator changes the window configuration of a partition, essentially selecting different preemption points from $\gls{B}_i$.
+This is done randomly, but heuristically we can prefer the single window configuration more often when the execution is already sliced, because even though this configuration does not necessarily lead to an optimal result, it is important to decrease complexity.
+We can also preferentially slice partitions with large executions.
+
+The crossover operator is a binary operator specific to the genetic algorithm that combines two states into one.
+For this specific problem, the gene representation considers tuples $(\gls{f}_i, \gls{t}_i)$ for each partition, representing the module and the offset, respectively. 
+Essentially, we combine a subset of partitions from one state with the remaining from the other state:
+In order to use the strengths of genetic algorithms, the genes should represent good solution characteristics with some modularity, such that they can be transmitted to new solutions, and be gradually improved. 
+In this regard, the chosen representation is flawed, as the optimization criteria fundamentally evaluates groups of partitions. 
+To gain some value from the crossover operator, we favour that partition pairs involved in a chain originate from the same state.
+
+\subsubsection{Operator selection and strategy}
+
+The main idea is to apply one of the operators $\gls{mov}$, $\gls{sw}$, $\gls{sh}$, $\gls{sl}$, $\gls{cross}$ at each iteration, followed by $\gls{lop}$ only on the modules which were affected.
+The overlying meta-heuristic algorithm is responsible for choosing which operators are used, to which variables, and also whether or not to accept the resulting solution.
+The operator selection is done mostly randomly as is characteristic of the class of algorithms used, but the heuristics described for each operator affect the selection.
+Essentially, the operator is chosen according to a fixed probability vector, determined empirically.
+
+Upon description of these operators, one should intuitively notice that these operators are sufficient for reaching any possible distribution of partitions among modules.
+In particular, just applying $\gls{mov}$ at random visits every possible state with respect to the partition assignment to modules, given enough time.
+Furthermore, with $\gls{lop}$ we can reach every equilibrium point corresponding to local maxima.
+
+The implemented algorithms are identical in most aspects. 
+A copy of the best state so far is kept at all times, and is returned if the stopping condition is verified or the algorithm is stopped early.
+Additionally, a current state (or a population of states) is kept, and the algorithm traverses the search space by applying the operators to generate new states.
+The new states can be better (in the sense of the optimization criterion) or worse than the current state, and the policy that decides whether to accept or reject a new state is the main distinguishing factor between the meta-heuristic algorithms.
+
+
+\end{document}

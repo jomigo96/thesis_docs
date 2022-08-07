@@ -1,0 +1,22 @@
+\begin{tikzpicture}
+	\begin{axis}[
+				width = 16cm,
+				height = 6cm,
+				xlabel = {$t_i$},
+				xmin=0,
+				xmax=500,
+				ymin=0,
+				ylabel = {$\alpha_i$},
+                ylabel style = {rotate=-90},
+				xtick = {0,500},
+				xticklabels={$0$, $T_i$},
+                scale = 1.2,
+                unbounded coords=jump,
+				]
+
+
+        \addplot [swred, thick] table [col sep = comma, x index = 0, y index = 1, mark = none] {data-6p.csv};
+
+        \addplot [colorA, only marks, mark options={scale=0.9, mark=star}] table [col sep = comma, x index = 0, y index = 1] {instersections.csv};
+	\end{axis}
+\end{tikzpicture}

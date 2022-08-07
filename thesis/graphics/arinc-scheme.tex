@@ -1,0 +1,54 @@
+%\tikzstyle my grid=[style=help lines, color=blue!50, step=1, very thin, dashed]
+\begin{tikzpicture}[scale=1.0]
+
+	%\draw[style=my grid] (-1.5, -0.5) grid (21.5,10.5);
+
+	\colorlet{grayshade}{gray!40!white}
+
+	\draw[very thick] (0,0) rectangle (20,10.75);
+	\draw (10, 11.5) node {\huge Core Processing Module};
+	
+	\draw[thick, fill=hwgray] (0.5, 0.5) rectangle (19.5, 1.5);
+	\draw (10,1) node {\Large HW};
+	\draw[decorate, decoration={brace,amplitude=6pt, mirror, raise=4pt}, yshift=0pt, very thick] (20.5, 0.5) -- node[right, xshift=0.4cm] {\Large Core Module} (20.5, 1.5);
+	
+	\draw[<->, very thick] (10, 1.5) -- (10, 2.5);
+	
+	\draw[thick, fill=colorB] (0.5,2.5) rectangle (19.5, 5);
+	\draw (10,3.75) node {\Large Arinc 653 compliant RTOS};
+	
+	\draw[thick, fill=colorA] (0.5, 5) rectangle (19.5, 5.75);
+	\draw (10, 5.375) node {\Large APEX};
+	\draw[decorate, decoration={brace,amplitude=6pt, mirror, raise=4pt}, yshift=0pt, very thick] (20.5, 2.5) -- node[right, xshift=0.4cm] {\Large Core Software} (20.5, 5.75);
+	
+	\foreach \x in {0.5, 5.5, 10.5, 15.5} {
+		\pgfmathsetmacro\r{\x+4}
+		\pgfmathsetmacro\c{\x+2}
+		\draw[thick, fill=swred] (\x, 6.5) rectangle (\r, 9.5);
+		\draw[<->, very thick] (\c, 6.5) -- (\c, 5.75);
+	}
+	\draw (2.5, 10) node {\Large Partition 1};
+	\draw (7.5, 10) node {\Large Partition 2}; 
+	\draw (12.5, 10) node {\Large Partition 3}; 
+	\draw (17.5, 10) node {\Large Partition 4}; 	
+	\draw[decorate, decoration={brace,amplitude=6pt, mirror, raise=4pt}, yshift=0pt, very thick] (20.5, 6.5) -- node[right, xshift=0.4cm] {\Large Application Software} (20.5, 9.5);
+	
+	\pgfmathsetmacro{\ybottom}{7.2}
+	\pgfmathsetmacro{\ytop}{8.5}
+	\tikzstyle process=[ellipse, fill=grayshade, draw=none, minimum height=0.2, minimum width=0.6]
+	
+	\foreach \x in {1.5, 6.5, 11.5, 16.5} {
+		\draw (\x, \ytop) node[style=process]  {\large P1};
+	}
+	\foreach \x in {1.5, 6.5, 16.5} {
+		\draw (\x, \ybottom) node[style=process]  {\large P2};
+	}
+	\foreach \x in {1.5,  16.5} {
+		\pgfmathsetmacro\y{\x+2}
+		\draw (\y, \ytop) node[style=process]  {\large P3};
+	}
+	\foreach \x in {1.5} {
+		\pgfmathsetmacro\xx{\x+2}
+		\draw (\xx, \ybottom) node[style=process]  {\large P4};
+	}	
+\end{tikzpicture}

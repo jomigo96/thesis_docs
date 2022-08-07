@@ -1,0 +1,25 @@
+\begin{tikzpicture}
+\begin{axis}[
+        ylabel={$t$ [\si{\micro\second}]},
+        ylabel style={rotate=-90},
+        xlabel={active chains},
+        xtick={0,1,2,3},
+        ytick={0,500,...,1500},
+        legend pos = north east,
+        ymajorgrids,
+    ]
+
+    \addplot[
+        color=colorA,
+        mark=*,
+    ] table [col sep = comma, x index = 0, y index = 1] {best-value-chains.csv};
+
+    \addplot[
+        color=colorC,
+        mark=square*,
+    ] table [col sep = comma, x index = 0, y index = 2] {best-value-chains.csv};
+
+    \legend{\texttt{best\_value\_a}, \texttt{best\_value\_b}}
+
+\end{axis}
+\end{tikzpicture}

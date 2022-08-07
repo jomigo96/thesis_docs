@@ -1,0 +1,34 @@
+\begin{tikzpicture}
+\begin{axis}[
+	boxplot/draw direction=x,
+	ytick={1, 2},
+	yticklabels={SA, Tabu},
+	xlabel={Time to $0.9\alpha_{best}$ [\si{\minute}]},
+	]
+	
+\addplot+ [
+colorA,
+thick,
+mark options={fill=colorA},
+boxplot prepared={
+lower whisker=11.8787,
+lower quartile=40.1135,
+median=60.3086,
+upper quartile=88.5171,
+upper whisker=120.4787,
+},] coordinates {};
+
+\addplot+ [
+colorC,
+thick,
+mark options={fill=colorC},
+boxplot prepared={
+lower whisker=17.5713,
+lower quartile=30.7858,
+median=42.4836,
+upper quartile=56.1466,
+upper whisker=73.9508,
+},] coordinates {(0, 104.76616666666668) (0, 110.62766666666667)};
+
+\end{axis}
+\end{tikzpicture}

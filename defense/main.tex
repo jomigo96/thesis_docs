@@ -1,0 +1,784 @@
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+
+\documentclass[english, frametitlelogo, mainlogoleft, handout]{beamer}
+%\documentclass[english, frametitlelogo, mainlogoleft, article]{beamer}
+%\documentclass[english, frametitlelogo, mainlogoleft, notes]{beamer}
+
+\input{preamble.tex}
+%\usepackage{pgfpages}
+%\setbeameroption{show notes}
+%\setbeameroption{show notes on second screen=right}
+
+\addbibresource{bibliography.bib}
+
+\mode<presentation> { 
+    \usetheme{Lisboa} 
+    %\usecolortheme{dolphin}
+}
+
+% \\\vspace{0.6cm} \small\itshape \href{mailto:{\myemail}}{\myemail}
+
+\newrobustcmd*\myemail{joaomfgoncalves@tecnico.ulisboa.pt}
+\newrobustcmd*\mytitle{Partition Scheduling in Distributed \linebreak Integrated Modular Avionics}
+\newrobustcmd*\mytitleshort{Partition Scheduling in DIMA}
+\newrobustcmd*\myauthor{João Miguel Fonseca Gonçalves}
+\newrobustcmd*\myauthorshort{João Gonçalves}
+\newrobustcmd*\myinstitution{Instituto Superior Técnico}
+\newrobustcmd*\myinstitutionshort{IST-UL}
+\newrobustcmd*\mydate{November 29, 2019}
+\newrobustcmd*\mydegree{MEAer}
+\newrobustcmd*\mynumber{81040}
+
+\title{\mytitleshort}
+\date{\mydate}
+\institute{\myinstitutionshort}
+\author{\myauthorshort}
+
+\hypersetup{
+    pdfsubject = {Artificial Intelligence, Operations Research, Avionics},
+    pdfkeywords = {Arinc 653, Integrated Modular Avionics, Scheduling, Optimization},
+} 
+
+\begin{document}
+
+\begin{frame}
+
+    \begin{tikzpicture}[node distance=1pt, shift={(0,0)}]
+
+        \node at (0, 3) {};
+
+        \fill[fill=white] (0,0) rectangle node[color=ist-cyan, text width=120mm, align=center] (A) {\LARGE\mytitle} ++(329pt, 2);
+
+        \node[below=0.7cm of A] (B) {\Large\myauthor};
+        \node[below=0.005cm of B, color=ist-cyan] (C) {\small\href{mailto:\myemail}{\myemail}};
+        \node[below=0.2cm of C] (D) {\myinstitution};
+        \node[below=0.2cm of D] (E) {\footnotesize\mydate};
+
+		\pgfmathsetmacro\r{-4.5}
+        \node at (2.5, \r) {\includegraphics[height=2.5cm]{IST_A_CMYK_POS.pdf}};
+        \node at (8.5, \r) {\includegraphics[width=3.7cm]{ULISBOA_HORIZONTAL_CMYK.pdf}};
+%        \node at (0,0) {\includegraphics[height=2.5cm]{IST_A_CMYK_POS.pdf}};
+%        \node at (4,0) {\includegraphics[width=3.7cm]{ULISBOA_HORIZONTAL_CMYK.pdf}};
+    \end{tikzpicture}
+
+    \note<1->{
+        \begin{itemize}
+            \item Aviónica Modular Integrada e Distribuída
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Outline}
+    \begin{minipage}{0.49\linewidth}
+        \tableofcontents[sections=1-2]
+    \end{minipage}
+    \begin{minipage}{0.49\linewidth}
+        \tableofcontents[sections=3-5]
+    \end{minipage}
+\end{frame}
+
+\section{Motivation}
+\subsection{Avionic Architectures}
+
+\begin{frame}
+    \frametitle{Avionic Architectures}
+    \begin{columns}[T]
+        \begin{column}{0.4\linewidth}
+
+            Federated Avionics
+
+            {\small
+            \begin{itemize}
+                \item Dedicated hardware for each application
+            \end{itemize}
+            }
+
+            \vspace{20pt}
+
+            IMA
+
+            {\small
+            \vspace{3pt}
+            \begin{itemize}
+                \item Resource sharing between unrelated applications
+                \item Active research area
+            \end{itemize}
+            }
+        \end{column}
+        \begin{column}{0.6\linewidth}
+            \centering
+            \resizebox{\linewidth}{!}{\input{graphics/ima_federated.tex}}
+        \end{column}
+    \end{columns}
+    \note<1->{
+        \begin{itemize}
+            \item Aviónica Federada
+            \item Aviónica Modular Integrada
+            \item Época onde se deu a transição - década 90
+            \item Robustez e segurança devida à separação física de aplicações
+            \item Modularizar -- integrar aplicações não relacionadas em hardware partilhado
+        \end{itemize}
+    }
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Distributed Integrated Modular Avionics}
+    \begin{columns}[T]
+        \begin{column}{0.4\linewidth}
+            Benefits:
+            \begin{itemize}
+                \item<1-> Maintains safety
+                \vspace{10pt}
+                \item<2-> Efficient usage of resources
+                \vspace{10pt}
+                \item<3-> Reduced space, weight and power
+                \vspace{10pt}
+                \item<4-> Uses open standards
+                \vspace{10pt}
+                \item<5-> Enables the involvement of smaller players
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.6\linewidth}
+            \centering
+            \resizebox{\linewidth}{!}{\input{graphics/dima.tex}}
+        \end{column}
+    \end{columns}
+    \note<1->{
+        
+        \begin{itemize}
+            \item Aviónica Modular Integrada e Distribuída
+            \item Remote Data Concentrators (Concentrador remoto de dados) -- dispositivo miniaturizado que faz o IO com a rede aviónica e os periféricos
+            \item Sumário: Isolamento por software vs. por hardware
+        \end{itemize}
+    }
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Strong Partitioning}
+    How is this achievable?
+
+    \vfill
+
+    \textbf{Space Partitioning}
+    \uncover<2->{
+    \begin{itemize}
+        \item Statically isolated memory for each application
+    \end{itemize}
+    }
+
+    \vspace{40pt}
+
+    \textbf{Time Partitioning}
+    \uncover<3->{
+    \begin{itemize}
+        \item<3-> Guaranteed processor time for each application
+        \item<4-> Deterministic scheduling 
+    \end{itemize}
+    }
+    \note<1->{
+        \begin{itemize}
+            \item Particionamento robusto
+            \item Uma aplicação não pode aceder a dados de outra, quer em memória ou em trânsito
+        \end{itemize}
+    }
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Arinc 653}
+
+    \begin{itemize}
+        \item Avionics Application Software Standard Interface
+    \end{itemize}
+
+    \begin{center}
+        \resizebox{0.7\linewidth}{!}{\input{graphics/arinc_squeme.tex}}
+    \end{center}
+    \note<1->{
+        \begin{itemize}
+            \item Interface entre Aplicações e o Sistema Operativo de Tempo Real
+            \item Partições é o nome que se dá às aplicações
+        \end{itemize}
+    }
+\end{frame}
+
+
+\subsection{Partition Schedules}
+\begin{frame}
+    \frametitle{Partition Schedules}
+    \begin{columns}[T]
+        \begin{column}{0.4\linewidth}
+            Characteristics
+            \begin{itemize}
+                \item<1-> Static
+                \item<2-> Strictly periodic
+                \item<3-> Functional requirements:
+                \uncover<3->{
+                    \begin{itemize}
+                        \item Inter-partition communication
+                        \item Access to resources
+                        \item Redundancy configuration
+                    \end{itemize}
+                }
+            \end{itemize}
+
+            \vfill
+            \uncover<4->{
+            Status
+            \begin{itemize}
+                \item<4-> Manual, iterative process
+                \item<5-> \textit{In-house} solutions
+            \end{itemize}
+            }
+        \end{column}
+        \begin{column}{0.6\linewidth}
+            \centering
+            \resizebox{0.9\linewidth}{!}{\input{graphics/schedule1.tex}}
+        \end{column}
+    \end{columns}
+    \note<1->{
+        \begin{itemize}
+            \item Estático -- Definido em configuração, não altera durante a execução, e possivelmente durante o tempo de vida do sistema
+            \item Estritamente periódico -- As partições repetem-se com um periodo, e os tempos de inicio são separados exatamente pelo periodo, sem flexibilidade
+            \item Diferença com os problemas de escalonamento usuais
+            \item Tempo -- largos meses a anos
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Partition Schedules -- Examples}
+    \centering
+    \resizebox{0.9\linewidth}{!}{\input{graphics/non_harmonic.tex}}
+
+    \vspace{1cm}
+    \centering
+    \resizebox{0.9\linewidth}{!}{\input{graphics/broken.tex}}
+    \note<1->{
+        \begin{itemize}
+            \item Extenções ao problema
+            \item Divisão de cada instância da partição em múltiplas janelas (tratado separadamente)
+            \item Motivação na figura de baixo
+        \end{itemize}
+    }
+\end{frame}
+
+\subsection{Objectives}
+
+\begin{frame}
+    \frametitle{Objectives}
+
+    Challenges:
+    \vspace{5pt}
+    \begin{itemize}
+        \item<1-> NP-completeness
+        \item<2-> Defining the system requirements
+        \item<3-> Reconfiguration is lengthy and expensive
+    \end{itemize}
+
+    \vspace{20pt}
+
+    Objectives:
+    \vspace{5pt}
+    \begin{itemize}
+        \item<4-> Comprehensive mathematical description
+        \item<5-> Automate schedule generation and validation
+        \item<6-> Find flexible solutions
+    \end{itemize}
+
+\end{frame}
+
+\section{Partition Scheduling Model}
+\subsection{Variables}
+
+\begin{frame}
+    \frametitle{Partition Scheduling Model}
+    \tableofcontents[currentsection,hideallsubsections]
+\end{frame}
+
+\begin{frame}
+    \frametitle{The Partition Scheduling Problem}
+
+    \begin{minipage}[t]{0.62\linewidth}
+    Schedule $N_p$ partitions:
+
+    \begin{itemize}
+        \item[$T_i$] -- partition $i$ period
+        \item[$e_i$] -- partition $i$ execution time (WCET)
+        \item[$s_i$] -- partition $i$ memory requirement
+    \end{itemize}
+
+    \vspace{5pt}
+    in $N_c$ modules:
+
+    \begin{itemize}
+        \item[$S_m$] -- module $m$ memory capacity
+    \end{itemize}
+    \end{minipage}
+    \begin{minipage}[t]{0.37\linewidth}
+        \vspace{5pt}
+        \uncover<2->{
+        Find, for each partition $i$:
+        \begin{itemize}
+            \item[$f_i$] -- assigned module
+            \item[$t_i$] -- starting offset
+        \end{itemize}
+        }
+    \end{minipage}
+
+    \vfill
+    \centering
+    \resizebox{0.9\linewidth}{!}{\input{graphics/non_harmonic_2.tex}}
+    \note<1->{
+        \begin{itemize}
+            \item WCET -- Tempo de Execução no pior caso
+            \item $t_i$ Desfazamento inicial
+            \item $f_i$ -- módulo onde é escalonada a partição
+            \item Cada módulo tem um destes escalonamentos
+        \end{itemize}
+    }
+\end{frame}
+
+\subsection{Distribution Constraints}
+
+\begin{frame}
+    \frametitle{Distribution Constraints}
+
+    \begin{itemize}
+        \item \textbf{Domain}  -- partitions can be scheduled in only some modules
+        \item \textbf{Exclusion} -- some partitions must be scheduled in distinct modules
+        \item \textbf{Inclusion} -- some partitions must be scheduled in the same module
+        \item \textbf{Memory} -- a module's memory must not be exceeded
+        \item \textbf{Uniqueness} -- a partition can only be scheduled in one module
+    \end{itemize}
+    \note<1->{
+        \begin{itemize}
+            \item Restições que afetam a disposição de partições entre os módulos
+        \end{itemize}
+    }
+\end{frame}
+
+\subsection{Communication Constraints}
+
+\begin{frame}
+    \frametitle{Inter-partition Communication}
+
+    \begin{itemize}
+        \item $E_{i,j}$ -- communication \textquote{chains}
+        \item $τ_{m,n}$ -- inter-module communication delay
+        \item Synchronous communication
+    \end{itemize}
+
+    \only<1>{\centering\resizebox{0.9\linewidth}{!}{\input{graphics/synchronous_chain.tex}}}
+    \only<2>{\centering\resizebox{0.9\linewidth}{!}{\input{graphics/stalled_chain.tex}}}
+
+    \note<1->{
+        \begin{itemize}
+            \item Comunicação modelada como cadeias
+            \item Menor separação entre inicio e fim de duas partições é limitada
+        \end{itemize}
+    }
+
+\end{frame}
+
+\subsection{Timing Constraints}
+
+\begin{frame}
+    \frametitle{Timing Constraints}
+
+    \begin{itemize}
+        \item No temporal overlap between two partitions in the same module
+    \end{itemize}
+
+    \vspace{12pt}
+
+    Theorem \cite{korst1992periodic}:
+
+    \begin{align*}
+        & g_{i,j} = {gcd}\braces*{T_i,T_j} \\[5pt]
+        & e_i ≤ {mod}\braces*{t_j-t_i, g_{i,j}} ≤ T_j-e_j
+    \end{align*}
+
+    \vfill
+
+    {\centering\resizebox{\linewidth}{!}{\input{graphics/latency_delays.tex}}}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Timing Constraints}
+
+    \begin{itemize}
+        \item Multiple windows of execution require an execution penalty, $ε$
+        \item Response time, $r_i$, is bounded
+    \end{itemize}
+
+    \vfill
+
+    {\centering\resizebox{\linewidth}{!}{\input{graphics/window_penalty.tex}}}
+
+    \note<1->{
+        \begin{itemize}
+            \item No caso do modelo com múltiplas janelas
+            \item Tempo de resposta limitado
+            \item Execução total deve dar o WCET, acrescido do tempo de context-switch
+            \item Context Switch - troca de contexto, involve restaurar caches, toma tempo 
+        \end{itemize}
+    }
+\end{frame}
+
+\subsection{Optimization}
+
+\begin{frame}
+    \frametitle{Optimizing Potential Execution}
+
+    \begin{itemize}
+         \item Partition 1 cannot increase its execution
+    \end{itemize}
+    \vspace{10pt}
+    {\centering\resizebox{\linewidth}{!}{\input{graphics/alpha_motivation_1.tex}}}
+
+    \vspace{42pt}
+
+    \begin{itemize}
+         \item It is possible to increase execution times without rescheduling
+    \end{itemize}
+    \vspace{10pt}
+    {\centering\resizebox{\linewidth}{!}{\input{graphics/alpha_motivation_2.tex}}}
+    \note<1->{
+        \begin{itemize}
+            \item Não só encontrar soluções viáveis, como mais favoráveis
+            \item Objetivo é aumentar a flexibilidade do sistema
+            \item Permitir acrescentar funcionalidade sem refazer o escalonamento
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Optimizing Potential Execution}
+
+    {\centering\resizebox{0.9\linewidth}{!}{\input{graphics/alpha_sketch.tex}}}
+
+    \vspace{20pt}
+
+    Objective: maximize $α$
+
+    \vspace{5pt}
+
+    \begin{itemize}
+        \item[$α$] -- \textquote{Minimum factor that scales all execution windows without overlaps}
+    \end{itemize}
+    \note<1->{
+        \begin{itemize}
+            \item Factor proporcional à duração da tarefa
+            \item Horário é viável com $α≥1$
+        \end{itemize}
+    }
+\end{frame}
+
+\section{Methodology}
+
+\begin{frame}
+    \frametitle{Partition Scheduling Model}
+    \tableofcontents[currentsection,hideallsubsections]
+\end{frame}
+
+\subsection{Mixed Integer Linear Programming}
+
+\begin{frame}{Mixed Integer Linear Program}
+
+    \begin{itemize}
+        \item<1-> Optimization problem with both integer and real-valued variables
+        \item<2-> Branch and bound / branch and cut algorithms
+        \item<3-> Yields an optimal solution
+    \end{itemize}
+
+    \vfill
+
+    {\centering\resizebox{0.95\linewidth}{!}{\input{data/milp.tex}}}
+    \note<1->{
+        \begin{itemize}
+            \item formalismo
+            \item garante optimalidade
+            \item decisão é NP-completa, problema de optimalidade é NP-dificil (literatura)
+            \item P polinomial, NP verificacao polinomial, NP-hard NP reduzidos a em tempo polinomial, NP-complete intersecao de NP e NP-hard
+        \end{itemize}
+        \centering
+        \resizebox{!}{4.5cm}{\includegraphics{graphics/np_squeme.png}}
+    }
+\end{frame}
+
+\subsection{Heuristic optimization}
+
+\begin{frame}
+    \frametitle{Best Response Algorithm \cite{al2012strictly}}
+
+    \begin{itemize}
+        \item<1-> Based on the Game Theory algorithm of the same name
+        \item<2-> Partitions sequentially move to the best available offset
+        \item<3-> When no partition can improve its $α$ value, equilibrium is reached
+        \item<4-> Optimality dependant on the starting point
+        \item<5-> Time complexity: $\bigO(N·T^{N-1})$
+    \end{itemize}
+
+    \vfill
+
+    {\centering\resizebox{0.95\linewidth}{!}{\input{graphics/best_response.tex}}}
+    \note<1->{
+        \begin{itemize}
+            \item Achar uma solução melhor, (possivelmente) sub-óptima, em tempo razoável
+        \end{itemize}
+    }
+\end{frame}
+
+\subsection{Global Optimization}
+
+\begin{frame}
+    \frametitle{Global Optimization}
+
+    Explore different distributions of partitions among modules
+    \begin{itemize}
+        \item Optimize each module's schedule using the previous algorithms
+        \item Change the distribution and repeat
+    \end{itemize}
+    \note<1->{
+        \begin{itemize}
+            \item Métodos anteriores optimizam um módulo
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Stochastic Optimization Algorithms}
+
+    Operators:
+    \begin{itemize}
+        \item Move partitions between two modules
+        \item Swap partitions between two modules
+        \item Shuffle partition offsets
+        \item Add/remove execution windows
+    \end{itemize}
+
+    \vspace{15pt}
+
+    Meta-heuristic algorithms:
+    \begin{itemize}
+        \item Simulated Annealing
+        \item Tabu Search
+        \item Genetic Algorithm
+    \end{itemize}
+    % mention Stopping criterion...
+    \note<1->{
+        \begin{itemize}
+            \item Algoritmos bastante estudados na literatura
+            \item Parar quando temos uma solução tão boa como desejada, ou ao fim de um tempo limite
+        \end{itemize}
+    }
+\end{frame}
+
+% Not sure if I will add this slide
+%\begin{frame}
+%    \frametitle{Tabu Search}
+%
+%    Evaluate neighborhood of the current solution
+%    Accept the best solution which was not recently visited
+%
+%\end{frame}
+
+\section{Results}
+
+\begin{frame}
+    \frametitle{Partition Scheduling Model}
+    \tableofcontents[currentsection,hideallsubsections]
+\end{frame}
+
+\subsection{Algorithmic Performance}
+
+\begin{frame}
+    \frametitle{Best Response Algorithm}
+
+    \resizebox{!}{6cm}{\input{graphics/best_response_plot.tex}}
+    \note<1->{
+        \begin{itemize}
+            \item Em relação aos algoritmos relacionados com a Melhor Resposta
+        \end{itemize}
+    }
+\end{frame}
+
+\subsection{Scheduling Tool}
+
+\begin{frame}
+    \frametitle{Test Cases}
+
+    \centering
+    \begin{tabular}{c c c c r}
+        \toprule
+        Designation & Modules & Partitions & Chains & $α_{best}$ \\
+        \midrule
+        $2M6P$     & \num{2}  & \num{6}   & \num{0}  & \num{5.5}*   \\
+        $4M10P$    & \num{4}  & \num{10}  & \num{3}  & \num{6.403}  \\ 
+        $4M20P$    & \num{4}  & \num{20}  & \num{8}  & \num{2.875}  \\ 
+        $8M40P$    & \num{8}  & \num{40}  & \num{15} & \num{2.984}  \\
+        $20M100P$  & \num{20} & \num{100} & \num{40} & \num{2.325}  \\
+        \midrule
+        $3M15P\mathdash S$ & \num{3} & \num{15} & \num{3} & \num{1.26} \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{25pt}
+
+    $T∈\braces*{100,200,500,1000}$
+
+    \note<1->{
+        \begin{itemize}
+            \item problema 20M100P tem dimensão semelhante aos enconctrados na industria
+            \item periodos não harmónicos
+            \item Reforçar, Divisao em varias janelas tratada separadamente
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Feasible Solution}
+    \centering
+    \begin{tabular}{c c c}
+        \toprule
+        Instance           & $t_{MILP}$          & $t_{heuristic}$ (median) \\
+        \midrule
+        $2M6P$             & \SI{1.00}{\second}  & \SI{0.593}{\second} \\
+        $4M10P$            & \SI{1.34}{\second}  & \SI{0.595}{\second} \\ 
+        $4M20P$            & \SI{6.29}{\second}  & \SI{0.830}{\second} \\ 
+        $8M40P$            & \SI{310.7}{\second} & \SI{1.155}{\second} \\
+        $20M100P$          & $>\SI{24}{\hour}$   & \SI{23.32}{\second} \\
+        \midrule
+        $3M15P\mathdash S$ & NA                  & \SI{74.53}{\second} \\
+        \bottomrule
+    \end{tabular}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Improved solution}
+
+    MILP solver does not converge in under \SI{24}{\hour}, except for $2M6P$.
+
+    \vfill
+
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        $2M6P$
+        \vspace{10pt}
+
+        \resizebox{0.9\linewidth}{!}{\input{graphics/boxplot-2M6P.tex}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        $2M10P$
+        \vspace{10pt}
+
+        \resizebox{0.9\linewidth}{!}{\input{graphics/boxplot-4M10P.tex}}
+    \end{minipage}
+    \note<1->{
+        \begin{itemize}
+            \item casos de estudo corridos várias vezes, dado serem estocásticos
+            \item Por conveniência, pára-se numa solução proxima da melhor
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Improved solution}
+
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        $4M20P$
+        \vspace{10pt}
+
+        \resizebox{0.9\linewidth}{!}{\input{graphics/boxplot-4M20P.tex}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        $8M40P$
+        \vspace{10pt}
+
+        \resizebox{0.9\linewidth}{!}{\input{graphics/boxplot-8M40P.tex}}
+    \end{minipage}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Improved solution}
+
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        $20M100P$
+        \vspace{10pt}
+
+        \resizebox{0.9\linewidth}{!}{\input{graphics/boxplot-20M100P.tex}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\linewidth}
+        \centering
+        $3M15P\mathdash S$
+        \vspace{10pt}
+
+        \resizebox{0.9\linewidth}{!}{\input{graphics/boxplot-3M15PS.tex}}
+    \end{minipage}
+    \note<1->{
+        \begin{itemize}
+            \item Uma hora parece muito, mas no tempo que estes sistemas demoram a serem integrados, não é nada
+            \item Relembrar que temos solução possível em segundos
+        \end{itemize}
+    }
+\end{frame}
+
+
+\section{Conclusions}
+
+\begin{frame}
+    \frametitle{Achievements}
+
+    \begin{itemize}
+        \item<1-> A scheduling tool and framework that supports a variety of constraints
+        \vspace{10pt}
+        \item<2-> Capable of producing flexible solutions in moderate amounts of time
+        \vspace{10pt}
+        \item<3-> A mathematical model that yields optimal solutions when time is not an issue
+    \end{itemize}
+    \note<1->{
+        \begin{itemize}
+            \item mencionar GMV
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \frametitle{Recommendations for Future Work}
+
+    \begin{itemize}
+        \item<1-> Integration with other (D)IMA configuration or V\&V frameworks
+        \vspace{30pt}
+        \item<2-> Partition scheduling in multicore (D)IMA systems
+    \end{itemize}
+    \note<1->{
+        \begin{itemize}
+            \item Configuracao de redes, decisões acerca do numero e tipo de processadores
+            \item Multicore traz nuances que nao sao abordadas aqui
+        \end{itemize}
+    }
+\end{frame}
+
+\nocite{samolej2011arinc, pira2016line}
+
+\begin{frame}
+    \frametitle{Selected Bibliography}
+    \printbibliography
+\end{frame}
+
+\end{document}

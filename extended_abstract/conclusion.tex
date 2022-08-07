@@ -1,0 +1,34 @@
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\section{Conclusions}
+\label{sec:conclusion}
+
+
+The research work presented focused on formally describing an avionics partition scheduling problem, and providing methods for efficiently solving it.
+The final product is integrated in GMV's tool suite for system configuration.
+
+Firstly, the described model remains compatible with most similar approaches to the problem, while supporting more kinds of constraints, which allow the user (the system integrator) to adequately specify platform requirements, with respect to resource usage as well as the redundancy architecture.
+
+The different methods implemented also allow the scheduling tool to be used for multiple purposes.
+The heuristic methods are generally able to quickly provide a solution that verifies all constraints, and this is useful for determining feasibility of certain instances in the early stages of integration.
+Additionally, in later phases of system integration, the heuristic methods are able to create optimized solutions in a moderate amounts of time.
+If on the other hand optimality is the goal and time is not an issue, then any external solver can take our \gls{milp} model and solve the problem to optimality.
+
+In addition, this work poses a contribution to academic research due to the novel changes imposed in our model, namely the synchronous communications model and the possibility for splitting a partition's execution in multiple windows.
+
+\subsection{Future work}
+
+Given the recent additions to the \glsxtrlong{a653} and the lacklustre performance observed in our scheduler with the addition of multiple partition execution windows, we consider that the most relevant future work on partition scheduling should be dedicated to multicore \gls{ima} systems.
+
+Other smaller modifications to the described model would also be interesting to consider, namely on the optimization criterion or the communications model, driven by the \gls{ima} platform's specific requirements.
+
+
+\end{document}

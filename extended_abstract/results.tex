@@ -1,0 +1,159 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\section{Results}
+\label{sec:results}
+
+In this section, we evaluate the computational performance of the methodology detailed in the previous section, evaluating both the scheduling tool as a whole, and some individual algorithms.
+The tests are run in a machine equipped with an Intel\textsuperscript{®} i7 CPU rated @ \SI{3.6}{\giga\hertz} with \SI{8}{\mega\byte} cache and \SI{16}{\giga\byte} RAM memory, running Linux.
+The tool and all algorithms are implemented in Python 3.6 and the \gls{milp}-based solver used is the open source solver CBC \cite{cbc-solver}.
+All time measurements are taken as the sum of processor time in user model and kernel mode on behalf of the program, and every execution exceeding \SI{24}{\hour} is aborted.
+
+\subsection{Local optimization algorithms}
+
+As a first analysis we evaluate the performance of some key algorithms that solve subproblems rather than the complete scheduling problem, namely the best response algorithm and its important component, the best value algorithm.
+
+We evaluate two different algorithms for determining the best value.
+Here, \texttt{best\_value\_a} is the exhaustive version which checks the partition utility at each valid offset, having time complexity $\bigO(\gls{T}_i\gls{Np})$, and \texttt{best\_value\_b} is the algorithm that computes the utility only in a set of interest points, which has time complexity $\bigO(\gls{T}_i\gls{Np}^3)$.
+Measurements are taken for several instances with \numrange{2}{12} partitions, presented in figure \ref{fig:best-value-results}.
+
+Figure \ref{fig:best-value-results} presents these results.
+The results corroborate the asymptotic time complexity for these algorithms, and we verify that version `b', despite having worse behaviour for large numbers of partitions, performs substantially better for the number of partitions per module typically found in these problems
+We further advance that the same is verified when we adjust the number of chains affecting the partitions, and the respective periods.
+
+Finally, we analyse only cases with up to \num{12} partitions because in real-life instances the number of partitions per \gls{cpm} is consistently around this value.
+Even if future improvements to \gls{ima} motivate this number to increase, we present an algorithm that has linear time complexity, so this methodology is not invalidated in this case.
+
+\begin{figure}[htb]
+    \centering
+    \centering
+    \resizebox{0.7\linewidth}{!}{\input{../thesis/graphics/best-value-by-partition.tex}}
+    \caption{Performance of two methods for computing the best value for partition offsets.}
+    \label{fig:best-value-results}
+\end{figure}
+
+Evaluation of the performance of the best response algorithm is done similarly for the single module case, the results being shown in figure \ref{fig:best-response-single}, and for the parallel approach, we consider similar numbers of partitions per module in a case with \num{3} modules, showing the results in figure \ref{fig:best-response-multi}.
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}{\linewidth}
+        \centering
+        \caption{Single module case.}
+        \label{fig:best-response-single}
+        \resizebox{0.7\linewidth}{!}{\input{../thesis/graphics/best-response-by-partition.tex}}
+    \end{subfigure}
+
+    \begin{subfigure}{\linewidth}
+        \centering
+        \caption{Algorithm applied in parallel to 3 modules.}
+        \label{fig:best-response-multi}
+        \resizebox{0.7\linewidth}{!}{\input{../thesis/graphics/sync-best-response-by-partition.tex}}
+    \end{subfigure}
+    \caption{Performance of the best response algorithm as function of the number of partitions.}
+    \label{fig:best-response-results}
+\end{figure}
+We verify the predicted exponential complexity with respect to the number of partitions, but we note that for the parallel approach adding a partition does not always increase the time to convergence, as it can further restrict the problem.
+
+Although this algorithm only reaches the optimal solution from a fraction of starting points that decreases as the dimension of the problem increases, the time to convergence remains overwhelmingly smaller when compared to the alternative \gls{milp} approach, which for these cases ranges from seconds to \SI{2.2}{\hour} in the case with $\gls{Np}=12$.
+
+\subsection{Scheduling tool}
+\label{sec:complete-tool}
+
+We define three test cases for the problem without multiple windows, which are identified by the number of modules and partitions, and one test case of moderate complexity for a problem where multiple windows are allowed.
+The test cases are generated randomly, choosing periods from the set $\braces{100, 200, 500, 1000}$ which allows non-harmonic periods, and durations up to \SI{15}{\percent} of the respective period.
+With respect to the distribution constraints, the memory requirements of the partitions are set to about \SI{40}{\percent} of the modules' capacity, thus imposing some restriction.
+About \SI{20}{\percent} and \SI{5}{\percent} of partitions are subject to an exclusion and inclusion constraints, respectively, and the domains are not restricted.
+Regarding communications, chains are defined with maximum delays in the order of magnitude of the partition periods, but always in a way that some restriction is imposed.
+The summary of these test cases is presented in table \ref{tab:cases}.
+\begin{table}[htbp]
+\centering
+\caption{Test cases definition.}
+\label{tab:cases}
+\begin{tabular}{c c c c r}
+    \toprule
+    Designation & $\gls{Nc}$ & $\gls{Np}$ & Number of chains & $\gls{alpha}_{best}$ \\
+    \midrule
+    $2M6P$             & \num{2}  & \num{6}   & \num{0}  & \num{5.5}   \\
+    $3M15P\mathdash S$ & \num{3}  & \num{15}  & \num{3}  & \num{1.26}  \\
+    $20M100P$          & \num{20} & \num{100} & \num{40} & \num{2.325} \\
+    \bottomrule
+\end{tabular}
+\end{table}
+We are not able to anticipate the optimal $\gls{alpha}$-parameter for these test cases given that the \gls{milp} model was only able to provide an optimal solution for the easiest case, $2M6P$.
+Hence we present the best value found in the course of gathering results, $\gls{alpha}_{best}$.
+The test case $3M15P\mathdash S$ allows multiple windows on some partitions, and was manually adjusted so that it is infeasible without these multiple windows.
+
+We evaluate the performance of the scheduler to finding a valid solution, without attempting to optimize the $\gls{alpha}$-parameter, as listed in table \ref{tab:feasibility-results}.
+\begin{table}[htbp]
+\centering
+    \caption{Scheduler performance finding the first valid solution.}
+    \label{tab:feasibility-results}
+    \begin{tabular}{c c c}
+        \toprule
+        Instance           & $t_{MILP}$          & $t_{heuristic}$ (median) \\
+        \midrule
+        $2M6P$             & \SI{1.00}{\second}  & \SI{0.593}{\second} \\
+        $3M15P\mathdash S$ & NA                  & \SI{74.53}{\second} \\
+        $20M100P$          & $>\SI{24}{\hour}$   & \SI{23.32}{\second} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+Results are shown in table \ref{tab:feasibility-results}.
+Both exact and heuristic methods perform well for the easier cases, but the \gls{milp} formulation does not converge in acceptable time for the largest case considered.
+Also, since our \gls{milp} model does not consider multiple windows, it is unable to handle $3M15P\mathdash S$, but ignoring the possibility of multiple windows, it proves infeasibility in \SI{1.19}{\second}.
+
+The performance of the scheduler is appropriate for the industry setting, where we can expect it to be able to verify feasibility in seconds even for complex problem instances.
+This is certainly useful because system integration depends on many interactions with the different suppliers to define all the parameters and requirements, which are then translated into constraints accepted by this model.
+In this stage, the problem changes quickly and having a tool to check feasibility and build a simple solution is of great benefit to the system integrator.
+
+
+For the optimization problem, we are interested in finding the optimal solution, however, since these optimal value is unknown, we aim to evaluate the performance in finding a \textit{good} solution.
+This solution is characterized by an evaluation function of $\gls{alpha}_{best}$, but for convenience we settle for a value $\gls{alpha}≥\gls{alpha}_{best}$ for $20M100P$.
+The meta-heuristic algorithms used are stochastic, thus the time taken can vary greatly between separate runs.
+For this reason, we measure the solution time \num{20} times for each meta-heuristic, and present the results as boxplots in figure \ref{fig:boxplots}.
+\begin{figure}[htb]
+    \centering
+    \begin{subfigure}{\linewidth}
+        \centering
+        \caption{$2M6P$}
+        \label{fig:boxplot1}
+        \resizebox{\linewidth}{!}{\input{./graphics/boxplot-2M6P.tex}}
+    \end{subfigure}%
+    
+    \begin{subfigure}{\linewidth}
+        \centering
+        \caption{$3M15P\mathdash S$}
+        \label{fig:boxplot6}
+        \resizebox{\linewidth}{!}{\input{./graphics/boxplot-3M15PS.tex}}
+    \end{subfigure}%
+
+    \begin{subfigure}{\linewidth}
+        \centering
+        \caption{$20M100P$}
+        \label{fig:boxplot5}
+        \resizebox{\linewidth}{!}{\input{./graphics/boxplot-20M100P.tex}}
+    \end{subfigure}%
+    \hfill
+    \caption{Performance of the scheduler with different meta-heuristics.}
+    \label{fig:boxplots}
+\end{figure}
+We verify from these results that \gls{sa} is superior in smaller cases, and Tabu-search more consistent for larger cases, while the genetic algorithm scales poorly and ultimately does not produce the targeted result in under \SI{24}{\hour}.
+
+As for the consequences to the industrial setting, based on the results for $20M100P$, we can expect to have a fairly optimized solution for the partition scheduling problem consistently in under an hour of processor time (over \SI{75}{\percent} of attempts), which is an excellent result.
+We further observe that allowing multiple windows on $3M15P\mathdash S$ induces an expensive increase in the solution time, especially considering the relatively small number of modules and partitions for this case.
+
+\subsubsection{Comparison to related work}
+
+We compare results to \textcite{al2012strictly} by generating multiple instances of a case with \num{4} modules and \num{40} partitions in the same way as described in this reference, which only considers memory, exclusion, and temporal segregation constraints, thus consisting in a subset of the problem described here.
+Our scheduler reached its stopping condition in \SIrange{5.17}{45.85}{\minute} with the average being \SI{15.25}{\minute}, compared to this reference's \SIrange{5}{50}{\minute} and average of \SI{27.4}{\minute}.
+However, we were unable to replicate the used stopping condition, so we elect to stop our scheduler on $0.95\gls{alpha}_{best}$.
+In spite of this, we can conclude that this approach is an improvement on similar work.
+
+
+\end{document}

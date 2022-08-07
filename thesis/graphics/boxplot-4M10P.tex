@@ -1,0 +1,46 @@
+\begin{tikzpicture}
+\begin{axis}[
+	boxplot/draw direction=x,
+	ytick={1, 2, 3},
+	yticklabels={SA, Tabu, Genetic},
+	xlabel={Time to $\alpha_{best}$ [\si{\second}]},
+	]
+	
+\addplot+ [
+colorA,
+thick,
+mark options={fill=colorA},
+boxplot prepared={
+lower whisker=1.72,
+lower quartile=7.6125,
+median=15.969999999999999,
+upper quartile=24.0325,
+upper whisker=35.57,
+},] coordinates {};
+
+\addplot+ [
+colorC,
+thick,
+mark options={fill=colorC},
+boxplot prepared={
+lower whisker=2.2199999999999998,
+lower quartile=6.66,
+median=17.83,
+upper quartile=47.855000000000004,
+upper whisker=69.55,
+},] coordinates {};
+
+\addplot+ [
+colorD,
+thick,
+mark options={fill=colorD},
+boxplot prepared={
+lower whisker=7.08,
+lower quartile=16.97,
+median=24.08,
+upper quartile=43.22,
+upper whisker=71.63,
+},] coordinates {};
+
+\end{axis}
+\end{tikzpicture}

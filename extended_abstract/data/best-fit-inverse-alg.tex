@@ -1,0 +1,20 @@
+\begin{algorithmic}[1]
+    \Procedure{best-fit-inverse}{$\gls{P}$, $\gls{C}$, $constraints$}
+    \State $items\gets$\Call{order\_by\_\#\_constraints}{$\gls{P}$, $constraints$}
+    \State $bins\gets\gls{C}$
+    \State $assignment\gets\braces{}$
+	\ForEach{$item \in items$}
+        \ForEach{$bin \in bins$}
+            \State $bin.fit\gets$ \Call{fits?}{$item$, $bin$, $assignment$, $constraints$}
+            \State $bin.capacity\gets\sum_{i\in assignment}\braces*{\gls{e}_i/\gls{T}_i\times\gls{delta}(bin.index-assignment[i])}$ 
+        \EndFor
+        \State $selected\gets$ \Call{min\_by\_capacity}{\textproc{filter}($bins$, $fit=true$)}
+        \If{$selected$}
+            \State add $\braces*{item=selected}$ to $assignment$
+        \Else
+            \State \Return $failure$
+        \EndIf
+	\EndFor
+	\State \Return $assignment$
+	\EndProcedure
+\end{algorithmic}

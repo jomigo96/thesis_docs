@@ -1,0 +1,31 @@
+\begin{minipage}{0.46\linewidth}
+\begin{alignat*}{3}
+    \max &\qquad&&{α} && \\
+	\text{s.t.} &&& 0≤{α}≤\min_{{p}_i\in{P}}\braces*{\frac{{T}_i}{{e}_i}}&& \\
+	&&& ∀ {p}_i\in{P}: && \sum_{{c}_m\in{C}}{a}_{i,m} = 1 \\
+	&&&&& 0≤{t}_i≤{T}_i-{e}_i\\
+    &&&&& ∀{c}_m∈\braces{{C}\smallsetminus{D}_i}:\ {a}_{i,m}=0\\
+    &&& ∀ {c}_m\in{C}: && \sum_{{p}_i\in{P}}{a}_{i,m}{s}_i ≤  {S}_m \\
+	&&& ∀ {p}_i,{p}_j\in{P}^2: && {f}_i ≠ {f}_j,\ ∀{c}_m\in{C}:\ {a}_{i,m}≤ {a}_{j,m} \\
+	&&&&& {f}_i = {f}_j,\ ∀{c}_m\in{C}:\ {a}_{i,m}={a}_{j,m} \\
+	&&&∀ {p}_i,{p}_j\in{P},j>i: && ∀{c}_m\in{C}:\ {t}_j-{t}_i-{q}_{i,j}{g}_{i,j}≥{α}{e}_i-\\
+	&&&&&-Z\left(2-{a}_{i,m}-{a}_{j,m}\right) \\ 
+\end{alignat*}
+\end{minipage}
+\hfill
+\begin{minipage}{0.46\linewidth}
+\begin{alignat*}{3}
+	&&&&& ∀{c}_m\in{C}:\ {t}_j-{t}_i-{q}_{i,j}{g}_{i,j}≤-{g}_{i,j}{α}{e}_j-\\
+	&&&&&-Z\left(2-{a}_{i,m}-{a}_{j,m}\right) \\
+	&&&&& \frac{{e}_i-{T}_i}{{g}_{i,j}} ≤ {q}_{i,j} ≤ \frac{{T}_j-{e}_i}{{g}_{i,j}} \\
+	&&&&& 0≤{t}_j-{t}_i-{q}_{i,j}{g}_{i,j}≤{g}_{i,j} \\
+	&&&∀ {p}_i,{p}_j\in{P},{E_{ij}^{max}}<∞: && {t}_j-{t}_i-{q}_{i,j}{g}_{i,j}+{e}_j+{x}_{i,j}{T}_j≤{E_{ij}^{max}} \\
+	&&&&& {t}_j-{t}_i-{q}_{i,j}{g}_{i,j}+{e}_i-\sum_{{c}_m,{c}_n\in{C}}\left({y}_{i,j,m,n}{τ}_{m,n}\right) + \\
+	&&&&& + {x}_{i,j}Z ≥ 0 \\
+	&&&&& ∀{c}_m,{c}_n\in{C}:\ {y}_{i,j,m,n}≥ {a}_{i,m}+{a}_{j,n}-1 \\
+	&&&&& ∀{c}_m,{c}_n\in{C}:\ {y}_{i,j,m,n}≤ {a}_{i,m} \\
+	&&&&& ∀{c}_m,{c}_n\in{C}:\ {y}_{i,j,m,n}≤ {a}_{j,n} \\
+	&&& {a}_{i,m}\in\braces*{0,1},\ {t}_i\in\mathbb{Z},\ {q}_{i,j}\in\mathbb{Z}&\;& \\
+	&&& {x}_{i,j}\in\braces*{0,1},\ {y}_{i,j,m,n}\in\braces*{0,1}&&
+\end{alignat*}
+\end{minipage}

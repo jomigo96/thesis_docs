@@ -1,0 +1,148 @@
+\begin{tikzpicture}[scale=1.0]
+	%\tikzstyle my grid=[style=help lines, color=blue!50, step=1, very thin, dashed]
+	%\draw[style=my grid] (-1, -0.5) grid (26,6);	
+
+	\pgfmathsetmacro\h{0.5};
+
+    \foreach \x in {0, 24} {
+        \draw[->, swred] (\x, 0.5) -- (\x, 5) node[above, black] {\scriptsize MTF};
+    }
+    \foreach \x in {1,...,23} {
+        \draw[dashed, gray] (\x, 0.5) -- (\x, 5);
+    }
+	
+	\pgfmathsetmacro\y{4};
+    \pgfmathsetmacro\w{3};
+	\foreach \x in {0, 12} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorA] (\x, \y) rectangle node[black] {$p_1$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{4};
+    \pgfmathsetmacro\w{2};
+	\foreach \x in {10} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorB] (\x, \y) rectangle node[black] {$p_2$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{4};
+    \pgfmathsetmacro\w{1};
+	\foreach \x in {14} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, pattern=crosshatch, pattern color=colorC] (\x, \y) rectangle node[black] {$p_3$} (\r, \t);
+	}
+    \pgfmathsetmacro\l{\y+0.5*\h}
+    \draw (0, \l) node[left] {a)};
+
+
+
+	\pgfmathsetmacro\y{3};
+    \pgfmathsetmacro\w{3};
+	\foreach \x in {0, 12} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorA] (\x, \y) rectangle node[black] {$p_1$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{3};
+    \pgfmathsetmacro\w{2};
+	\foreach \x in {7} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorB] (\x, \y) rectangle node[black] {$p_2$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{3};
+    \pgfmathsetmacro\w{1};
+	\foreach \x in {14} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, pattern=crosshatch, pattern color=colorC] (\x, \y) rectangle node[black] {$p_3$} (\r, \t);
+	}
+    \pgfmathsetmacro\l{\y+0.5*\h}
+    \draw (0, \l) node[left] {b)};
+
+
+	\pgfmathsetmacro\y{2};
+    \pgfmathsetmacro\w{3};
+	\foreach \x in {0, 12} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorA] (\x, \y) rectangle node[black] {$p_1$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{2};
+    \pgfmathsetmacro\w{2};
+	\foreach \x in {7} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorB] (\x, \y) rectangle node[black] {$p_2$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{2};
+    \pgfmathsetmacro\w{1};
+	\foreach \x in {21} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorC] (\x, \y) rectangle node[black] {$p_3$} (\r, \t);
+	}
+    \pgfmathsetmacro\l{\y+0.5*\h}
+    \draw (0, \l) node[left] {c)};
+
+
+	\pgfmathsetmacro\y{1};
+    \pgfmathsetmacro\w{3};
+	\foreach \x in {0, 12} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorA] (\x, \y) rectangle node[black] {$p_1$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{1};
+    \pgfmathsetmacro\w{2};
+	\foreach \x in {7} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorB] (\x, \y) rectangle node[black] {$p_2$} (\r, \t);
+	}
+	\pgfmathsetmacro\y{1};
+    \pgfmathsetmacro\w{1};
+	\foreach \x in {21} {
+		\pgfmathsetmacro\r{\x+\w}
+		\pgfmathsetmacro\t{\y+\h};
+		\draw[gray, fill=colorC] (\x, \y) rectangle node[black] {$p_3$} (\r, \t);
+	}
+    \pgfmathsetmacro\l{\y+0.5*\h}
+    \draw (0, \l) node[left] {d)};
+
+    %%% utilities
+
+	\pgfmathsetmacro\y{3};
+    \pgfmathsetmacro\w{4};
+    \pgfmathsetmacro\x{3}
+    \pgfmathsetmacro\r{\x+\w}
+    \pgfmathsetmacro\t{\y+\h};
+    \draw[gray, dashed, fill=colorA, fill opacity=0.3] (\x, \y) rectangle (\r, \t);
+    \draw[<->] (3, 3.6) -- node[above] {$(1-α_2)e_1$} (7, 3.6);
+
+	\pgfmathsetmacro\y{3};
+    \pgfmathsetmacro\w{2.666};
+    \pgfmathsetmacro\x{9}
+    \pgfmathsetmacro\r{\x+\w}
+    \pgfmathsetmacro\t{\y+\h};
+    \draw[gray, dashed, fill=colorB, fill opacity=0.3] (\x, \y) rectangle (\r, \t);
+    \draw[<->] (9, 2.9) -- node[below] {$(1-α_2)e_2$} (11.6666, 2.9);
+
+	\pgfmathsetmacro\y{2};
+    \pgfmathsetmacro\w{6};
+    \pgfmathsetmacro\x{15}
+    \pgfmathsetmacro\r{\x+\w}
+    \pgfmathsetmacro\t{\y+\h};
+    \draw[gray, dashed, fill=colorA, fill opacity=0.3] (\x, \y) rectangle (\r, \t);
+    \draw[<->] (15, 2.6) -- node[above] {$(1-α_3)e_1$} (21, 2.6);
+
+	\pgfmathsetmacro\y{2};
+    \pgfmathsetmacro\w{2};
+    \pgfmathsetmacro\x{22}
+    \pgfmathsetmacro\r{\x+\w}
+    \pgfmathsetmacro\t{\y+\h};
+    \draw[gray, dashed, fill=colorC, fill opacity=0.3] (\x, \y) rectangle (\r, \t);
+    \draw[<->] (21, 2.6) -- node[above] {$α_3 e_3$} (24, 2.6);
+
+\end{tikzpicture}

@@ -1,0 +1,76 @@
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\setcounter{chapter}{5}
+
+\begin{document}
+
+
+
+\chapter{Conclusions}
+\label{sec:conclusion}
+
+This chapter presents an overview of the topics discussed in this thesis and of the conclusions obtained, and leaves suggestions for future work.
+
+\section{Overview}
+
+
+The research work presented in this dissertation focused on formally describing an avionics partition scheduling problem, and providing methods for efficiently solving it.
+The final product is to be integrated in GMV's tool suite for system configuration.
+
+A mathematical model is provided, detailing how to express high-level system requirements in terms of problem variables and constraints.
+The overall problem is solved using different classes of algorithms.
+A \gls{milp} formulation optimally solves the problem in its simplest form, but it is incapable of handling large instances commonly encountered in this domain, thus heuristic methods are employed.
+We use a constraint-based approach to build initial resource allocations or prove infeasibility on this subtask, and general purpose stochastic optimization algorithms, namely \gls{sa}, Tabu-search and a genetic algorithm are adapted to perform exploration around this starting solution.
+Tabu-search is found to be suitable for examples of modern scale, such as those encountered in modern avionic systems.
+In addition, we adapt an existing local optimization procedure, called the best response algorithm, borrowed from the field of game theory, that performs exploitation of solutions, and is shown superior to any other method for this task.
+
+\section{Achievements}
+
+Firstly, the described model remains compatible with most similar approaches to the problem, while supporting more kinds of constraints, which allow the user (the system integrator) to adequately specify platform requirements, with respect to resource usage as well as the redundancy architecture.
+
+The different methods implemented also allow the scheduling tool to be used for multiple purposes.
+The heuristic methods are generally able to quickly provide a solution that verifies all constraints, and this is useful for determining feasibility of certain instances in the early stages of integration.
+Additionally, in later phases of system integration, the heuristic methods are able to create optimized solutions in a moderate amounts of time.
+If on the other hand optimality is the goal and time is not an issue, then any external solver can take our \gls{milp} model and solve the problem to optimality.
+
+The tool is also equipped with features that assist the user to make decisions along the project life cycle, and in general decreases manual effort in this task:
+\begin{itemize}
+    \addtolength{\itemsep}{-0.8em}
+    \item Easy to maintain problem definition based on configuration files.
+    \item Evaluation of solutions and logs detailing which specific constraints are not met, and which pose no restriction on the problem.
+    \item Insight on the cause for infeasibility in certain cases.
+    \item Visualisation of schedules in graphical format similar to the images included in this dissertation, and in table format.
+    \addtolength{\itemsep}{0.8em}
+\end{itemize}
+
+In conclusion, the objectives stated in the introduction were accomplished.
+In addition, this work poses a contribution to academic research due to the novel changes imposed in our model, namely the synchronous communications model and the possibility for splitting a partition's execution in multiple windows.
+
+
+\section{Future work}
+
+Scheduling for \gls{ima} platforms remains an open area of research.
+One of the main difficulties faced is the non-existence of a standardized model that accurately expresses the functional requirements of these systems.
+Ultimately, some of these requirements are implementation-specific, and this means research effort is spread over many slightly different scheduling problems.
+
+This model considers that the avionic architecture is already defined, including the available hardware and communications infrastructure.
+There are techniques for defining and optimizing \gls{ima} architectural topologies \cite{annighofer2013supporting}; and parametrizing network delays \cite{benammar2017forward}, which are tasks that are tightly coupled with partition scheduling.
+However, these are currently approached independently, so a holistic approach integrating these tasks would be relevant.
+
+Other smaller modifications to the described model are also interesting to consider.
+Namely, our optimization criterion aims to maximize the worst case partition utility, but a weighed sum of all partition utilities could be more relevant as it gives the user the decision of which partitions are more relevant to give larger execution budgets.
+Other criteria can also apply, namely minimizing the usage of the communications network.
+Finally, more comprehensive modelling of communication constraints is required, and this likely requires that we specify and schedule each individual message, rather than setting maximum time separation between partitions that exchange messages.
+
+Finally, I consider that given the recent additions to \glsxtrlong{a653} and the lacklustre performance observed in our scheduler with the addition of multiple partition execution windows, the most important future work on partition scheduling should be dedicated to multicore \gls{ima} systems.
+
+% Since we conclude that heuristic algorithms are required, a more formal analysis is required, and it would be interesting to verify whether the this or some other methodologies are approximation algorithms, so as to have guarantees as to how close to optimal the solutions are.
+
+
+\end{document}

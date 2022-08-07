@@ -1,0 +1,27 @@
+\begin{tikzpicture}
+\begin{axis}[
+        ylabel={$t$ [\si{\milli\second}]},
+        xlabel={$T_1$},
+        ylabel style={rotate=-90},
+        legend pos = north west,
+        ymajorgrids,
+    ]
+
+
+    \addplot[
+        color=colorA,
+        mark=*,
+    ] table [col sep = comma, x index = 0, y expr=\thisrowno{1}*0.001] {best-value-period.csv};
+
+    \addplot[
+        color=colorC,
+        mark=square*,
+    ] table [col sep = comma, x index = 0, y expr=\thisrowno{2}*0.001, only marks] {best-value-period.csv};
+
+    \draw[gray, thin, dashed] (250, 0.929) -- (3250, 5.222);
+    \draw[gray, thin, dashed] (250, 0.929) -- (3250, 14.253);
+
+    \legend{\texttt{best\_value\_a}, \texttt{best\_value\_b}}
+
+\end{axis}
+\end{tikzpicture}

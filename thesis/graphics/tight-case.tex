@@ -1,0 +1,20 @@
+\begin{tikzpicture}[scale=1.0]
+
+    \foreach \x in {0,6,12} {
+        \draw[swred, ->] (\x,-0.1) -- (\x, 2) node[black, above] {\small MTF};
+    }
+    \foreach \x in {1,...,5} {
+        \draw[gray, dashed] (\x,-0.1) -- (\x, 1.8);
+    }
+    \foreach \x in {7,...,11} {
+        \draw[gray, dashed] (\x,-0.1) -- (\x, 1.8);
+    }
+    \draw [gray, fill=colorA] (0, 1) rectangle node[black] {$p_1$} (2, 1.5);
+    \draw [gray, fill=colorB] (1, 0.5) rectangle node[black] {$p_2$} (3, 1);
+    \draw [gray, fill=colorC] (3, 0) rectangle node[black] {$p_3$} (5, 0.5);
+    \draw [gray, fill=colorA] (6, 1) rectangle node[black] {$p_1$} (8, 1.5);
+    \draw [gray, fill=colorB] (7, 0.5) rectangle node[black] {$p_2$} (9, 1);
+    \draw [gray, fill=colorC] (9, 0) rectangle node[black] {$p_3$} (11, 0.5);
+
+
+\end{tikzpicture}

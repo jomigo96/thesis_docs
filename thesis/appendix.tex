@@ -1,0 +1,113 @@
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]}
+%% arara: biber: {options: ["-input-directory=build", "-output-directory=build"]}
+%% arara: bib2gls: {group: yes, options: ["--dir=build", "--tex-encoding=utf-8"]}
+%% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+% arara: lualatex: {shell: yes, options: ["-aux-directory=build"]} 
+
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\chapter{Optimization algorithms}
+\label{an:algs}
+
+\section{\glsfmtlong{sa} algorithm}
+\label{an:sa}
+
+\begin{algorithm}[H]
+    \begin{algorithmic}[1]
+        \directlua{load_lines("data/sa-alg.tex", 2, 24)}
+        \algstore{myalg}
+    \end{algorithmic}
+    \caption{\gls{sa} algorithm for the partition scheduling problem.}
+    \label{alg:sa}
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \ContinuedFloat
+    \begin{algorithmic}
+        \algrestore{myalg}
+        \directlua{load_lines("data/sa-alg.tex", 25, 37)}
+    \end{algorithmic}
+    \caption{\gls{sa} algorithm for the partition scheduling problem. (cont.)}
+\end{algorithm}
+
+\section{Tabu search algorithm}
+\label{an:tabu}
+
+\begin{algorithm}[H]
+    \begin{algorithmic}[1]
+        \directlua{load_lines("data/tabu-alg.tex", 2, 22)}
+        \algstore{myalg}
+    \end{algorithmic}
+    \caption{Tabu search algorithm for the partition scheduling problem.}
+    \label{alg:tabu}
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \ContinuedFloat
+    \begin{algorithmic}
+        \algrestore{myalg}
+        \directlua{load_lines("data/tabu-alg.tex", 23, 38)}
+    \end{algorithmic}
+    \caption{Tabu search algorithm for the partition scheduling problem. (cont.)}
+\end{algorithm}
+
+\section{Genetic algorithm}
+\label{an:genetic}
+
+\begin{algorithm}[H]
+    \begin{algorithmic}[1]
+        \directlua{load_lines("data/genetic-alg.tex", 2, 18)}
+        \algstore{myalg}
+    \end{algorithmic}
+    \caption{Genetic algorithm for the partition scheduling problem.}
+    \label{alg:genetic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \ContinuedFloat
+    \begin{algorithmic}
+        \algrestore{myalg}
+        \directlua{load_lines("data/genetic-alg.tex", 19, 40)}
+    \end{algorithmic}
+    \caption{Genetic algorithm for the partition scheduling problem. (cont.)}
+\end{algorithm}
+
+\chapter{Test Cases}
+\label{an:test-cases}
+
+% This is heavy on compilation, ignore for now
+\input{dataset.tex}
+
+\begin{comment}
+\chapter{Tool overview}
+\label{an:tool}
+
+Workflow, features, limitations, I/O...
+
+Problem specification via yaml files.
+
+Processing options yields logs with messages detailing constraints that dont make sense. etc.
+Run modes, in `analysis' mode, the tool is able to detail the evaluation function of the schedule, each specific partition's utility, which constraints are not met, etc.
+In `solve' mode, the tool solves the problem according to other options.
+The user can configure the number of steps, target values, algorithm to use, its parameters, etc.
+Configuration is made via config file as well, or through via the command line interface.
+
+Tool stashes results in serialized format, and can resume from previous states.
+Outputs consist in table format, serialized format which can be (carefully) edited directly by the user, and in graphics similar to those in the body of this thesis.
+
+Program flow chart...
+
+\newpage
+\begin{figure}[H]
+    \centering
+    \resizebox{!}{0.95\textheight}{\input{graphics/flowchart.tex}}
+    \caption{Simplified scheduling tool flowchart.}
+    \label{fig:flowchart}
+\end{figure}
+
+\end{comment}
+
+
+\end{document}

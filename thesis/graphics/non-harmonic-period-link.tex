@@ -1,0 +1,28 @@
+\begin{tikzpicture}[scale=1.0]
+	%\tikzstyle my grid=[style=help lines, color=blue!50, step=1, very thin, dashed]
+	%\draw[style=my grid] (-1, -0.5) grid (24,2);	
+	
+	
+	\foreach \x in {0,4,8,12,16,20} {
+		\pgfmathsetmacro\r{\x+1}
+		\draw[gray, fill=colorA] (\x,1.5) rectangle node[black] {$p_1$} (\r, 2);
+		\draw[gray, fill=colorA] (\x,0) rectangle node[black] {$p_1$} (\r, 0.5);
+	}
+	\foreach \x in {1,7,13,19} {
+		\pgfmathsetmacro\r{\x+1}
+		\draw[gray, fill=colorB] (\x,1) rectangle node[black] {$p_2$} (\r, 1.5);
+		\draw[gray, fill=colorB] (\x,0) rectangle node[black] {$p_2$} (\r, 0.5);
+	}
+	
+	\foreach \x/\y in {0/2, 12/14} {
+		\draw[<->] (\x, 2.5) -- node[above] {$E$} (\y, 2.5);
+	}
+	\foreach \x/\s in {2/2, 5/2, 9/3, 14/2, 17/2, 21/3} {
+		\pgfmathsetmacro\r{\x+\s}
+		\draw[gray, fill=hwgray] (\x, 0) rectangle node[black] {Idle} (\r, 0.5);
+	}
+	\foreach \x in {0,12,24} {
+		\draw[gray, dashed] (\x,-0.5) -- (\x, 2.5);
+	}
+	
+\end{tikzpicture}

@@ -1,0 +1,38 @@
+\begin{algorithmic}[1]
+	\Require $N\gets $maximum number of iterations
+	\Require $\gamma\gets$ upper bound on the target function ($\alpha$) \Comment{Optional}
+	\Require $\texttt{state} \gets$ initial state
+	\Require $T_0 \gets$ Initial temperature
+	\Procedure{Simulated\_Annealing}{\texttt{state}}
+		\State $\texttt{best} \gets \texttt{state}$
+		\State $\alpha_{\text{best}} \gets \gls{ev}(\texttt{state})$
+        \State $e \gets -\gls{ev}(\texttt{state})$ \Comment{Energy}
+		\State $i \gets 0$
+		\While{$i<N$}
+			\State $T\gets T_0 q^{\frac{i}{N}}$
+            \State $op\gets$\Call{random\_choice}{$\gls{mov}$, $\gls{sw}$, $\gls{sh}$, $\gls{sl}$}
+            \State $\texttt{candidate} \gets op(\texttt{state})$
+            \State $\gls{lop}(\texttt{candidate})$
+			\State $e_c \gets -\gls{ev}(\texttt{candidate})$ 
+			\If{$e_c<e$}
+                \State $\texttt{state} \gets \texttt{candidate}$
+				\State $e \gets e_c$
+			\Else
+                \State $\gls{prob} \gets \exp{ \left( \frac{e-e_c}{k\cdot T} \right) }$
+                \If{true with probability $\gls{prob}$}
+					\State $\texttt{state} \gets \texttt{candidate}$
+					\State $e \gets e_c$
+				\EndIf
+			\EndIf
+			\If{$-e > \alpha_{\text{best}}$}
+				\State $\texttt{best} \gets \texttt{state}$
+				\State $\alpha_{\text{best}} \gets -e$
+			\EndIf
+			\If{$\alpha_{\text{best}} \geq \gamma$}
+				\State \Return \texttt{best}
+			\EndIf
+			\State $i\gets i+1$
+		\EndWhile
+		\State \Return \texttt{best}
+	\EndProcedure
+\end{algorithmic}

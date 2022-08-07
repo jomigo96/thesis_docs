@@ -1,0 +1,24 @@
+\begin{tikzpicture}
+	\begin{axis}[
+				width = 16cm,
+				height = 4cm,
+				xlabel = {$t_i$},
+				xmin=0,
+				xmax=200,
+				ymin=0,
+				ymax=2.3,
+				ylabel = {$\alpha_i$},
+                ylabel style = {rotate=-90},
+				ytick = {0,1,2},
+				xtick = {0,200},
+				xticklabels={$0$, $T_i$},
+                scale = 1.2,
+				]
+		\addplot [swred, thick] table [col sep = comma, x index = 0, y index = 1, mark = none] {data-2p.csv};
+		
+		\draw[dashed] (54,0) -- (54, 0.8) node[above, yshift=-2pt] {$t_j$};
+		\draw[dashed] (154,0) -- (154, 0.8) node[above, yshift=-2pt] {$t_j+g_{i,j}$};
+        \draw[<-] (14, 1.00) -- (19, 1.5) node[above] {$\frac{\mod\braces*{t_j-t_i, g_{i,j}}}{e_j}$};
+        \draw[<-] (66, 1.20) -- (49, 1.5) node [above] {$\frac{\mod\braces*{t_i-t_j, g_{i,j}}}{e_i}$};
+	\end{axis}
+\end{tikzpicture}

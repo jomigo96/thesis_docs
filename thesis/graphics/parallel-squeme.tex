@@ -1,0 +1,46 @@
+\begin{tikzpicture}[scale=1.0, use Hobby shortcut, closed=true]
+
+
+    % Modules
+    \pgfmathsetmacro\mwidth{3.3}
+    \pgfmathsetmacro\mheight{5.0}
+    \newcounter{mcounter}\setcounter{mcounter}{1}
+    \foreach \x/\y in {0/0, 0/7, 8/0, 8/7} {
+        \pgfmathsetmacro\xx{\x+\mwidth}
+        \pgfmathsetmacro\yy{\y+\mheight}
+        \draw[fill=hwgray] (\x,\y) rectangle (\xx, \yy);
+        \draw (\x,\y) node[yshift=-0.3cm, xshift=1.65cm] {\Large $c_\themcounter$};
+        \stepcounter{mcounter}
+    }
+
+    % Partitions
+    \draw[fill=swred] (0.15, 10.8) rectangle node[black] {$p_1$} (3.15, 11.8) node[yshift=-0.5cm] (1r) {};
+    \draw[fill=swred] (0.15, 9.6) node[yshift=0.5cm] (2l) {} rectangle node[black] {$p_2$} (3.15, 10.6) node[yshift=-0.5cm] (2r) {};
+    \draw[fill=swred] (0.15, 8.4) node[yshift=0.5cm] (3l) {} rectangle node[black] {$p_3$} (3.15, 9.4) node[yshift=-0.5cm] (3r) {};
+
+    \draw[fill=swred] (8.15, 10.8) node[yshift=0.5cm] (4l) {} rectangle node[black] {$p_4$} (11.15, 11.8) node[yshift=-0.5cm] (4r) {};
+    \draw[fill=swred] (8.15, 9.6) rectangle node[black] {$p_5$}  (11.15, 10.6);
+    \draw[fill=swred] (8.15, 8.4) rectangle node[black] {$p_6$}  (11.15, 9.4) node[yshift=-0.5cm] (6r) {};
+    \draw[fill=swred] (8.15, 7.2) rectangle node[black] {$p_7$}  (11.15, 8.2);
+
+    \draw[fill=swred] (0.15, 3.8) node[yshift=0.5cm] (8l) {} rectangle node[black] {$p_8$} (3.15, 4.8) node[yshift=-0.5cm] (8r) {};
+    \draw[fill=swred] (0.15, 2.6) rectangle node[black] {$p_9$} (3.15, 3.6) node[yshift=-0.5cm] (9r) {};
+    \draw[fill=swred] (0.15, 1.4) node[yshift=0.5cm] (10l) {} rectangle node[black] {$p_{10}$} (3.15, 2.4);
+
+    \draw[fill=swred] (8.15, 3.8) node[yshift=0.5cm] (11l) {} rectangle node[black] {$p_{11}$} (11.15, 4.8);
+    \draw[fill=swred] (8.15, 2.6) rectangle node[black] {$p_{12}$}  (11.15, 3.6);
+
+    % Links
+    \draw[<->, thick] (1r) -- (4l);
+    \draw[<->, thick] (3r) -- (11l);
+    \draw[<->, thick] (2l) to [out=180, in=180] (3l);
+    \draw[<->, thick] (8l) to [out=180, in=180] (10l);
+    \draw[<->, thick] (4r) to [out=0, in=0] (6r);
+    \draw[<->, thick] (8r) to [out=0, in=0] (9r);
+
+
+    % surrounding shapes
+    \draw[dashed, thick] plot[smooth, tension=.8] (-0.3, 12.3).. (-0.8, 9.5).. (-0.3, 6.7).. (4, 6).. (7.7, -0.3).. (9.65 , -0.7).. (11.6, -0.3).. (12.4, 6).. (11.6, 12.3).. (5.3, 13.3).. (-0.3, 12.3);
+    %\draw plot[smooth, tension=.8] (-0.3, -0.3).. (3.6, -0.3).. (3.6, 5.3).. (-0.3, 5.3).. (-0.3, -0.3);
+
+\end{tikzpicture}

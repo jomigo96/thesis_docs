@@ -1,0 +1,24 @@
+\begin{tikzpicture}
+\begin{axis}[
+        ylabel={$t$ [\si{\micro\second}]},
+        xlabel={$N_p$},
+        ylabel style={rotate=-90},
+        ytick={0,500,...,3000},
+        legend pos = north west,
+        ymajorgrids,
+    ]
+
+    \addplot[
+        color=colorA,
+        mark=*,
+    ] table [col sep = comma, x index = 0, y index = 1] {best-value.csv};
+
+    \addplot[
+        color=colorC,
+        mark=square*,
+    ] table [col sep = comma, x index = 0, y index = 2] {best-value.csv};
+
+    \legend{\texttt{best\_value\_a}, \texttt{best\_value\_b}}
+
+\end{axis}
+\end{tikzpicture}

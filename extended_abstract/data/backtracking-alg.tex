@@ -1,0 +1,25 @@
+  \begin{algorithmic}[1]
+	\Procedure{Backtracking-search}{$Problem$}
+		\State \Return \Call{Backtrack}{$\{\}$, $Problem$}
+	\EndProcedure
+	\State
+    \Procedure{Backtrack}{$Assignment$, $Problem$}
+	\If{$assignment$ is complete}
+		\Return $assignment$
+	\EndIf
+	\State $var \gets \Call{unassigned-variable}{Problem}$
+	\ForEach{$value \in var.\texttt{domain}$}
+		\If{$value$ is consistent with $Assignment$}\plabel{line:consistency}
+			\State add $\{var=value\}$ to $Assignment$
+			\If{ \Call{Forward\_check}{$Problem$, $Assignment$, $var$} }\label{line:forward_check}
+				\State $result \gets$ \Call{Backtrack}{$Assignment$, $Problem$}
+				\If{$result \neq failure$}
+					\State \Return $result$
+				\EndIf
+			\EndIf
+			\State remove $\{var=value\}$ from $Assignment$
+		\EndIf
+	\EndFor
+	\State \Return $failure$
+	\EndProcedure
+  \end{algorithmic}

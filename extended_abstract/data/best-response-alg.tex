@@ -1,0 +1,18 @@
+\begin{algorithmic}[1]
+	\Procedure{Best\_response\_optimization}{\texttt{partitions}, \texttt{chains}, \texttt{offsets}}
+        \State $N \gets$\Call{length}{\texttt{partitions}}
+		\State $N_{\text{stable}} \gets 1$  
+		\While{ $N_{\text{stable}} < N$}
+            \State $p\gets$ \Call{next}{\texttt{partitions}} \plabel{line:next-partition}
+            \State \texttt{domain} $\gets$ \Call{valid\_offsets}{$p$, \texttt{chains}, \texttt{offsets}}\plabel{line:valid-offsets}
+            \State $t_{\text{new}} \gets$ \Call{best\_value}{$p$, \texttt{domain}, \texttt{offsets}}\plabel{line:best-value}
+            \If{$t_{\text{new}}=\texttt{offsets}[p]$}
+                \State $N_{\text{stable}} \gets N_{\text{stable}}+1$
+            \Else
+                \State \texttt{offsets}$[p]\gets t_{\text{new}}$
+                \State $N_{\text{stable}} \gets 1$
+            \EndIf
+		\EndWhile
+		\State \Return \texttt{offsets}
+	\EndProcedure
+\end{algorithmic}

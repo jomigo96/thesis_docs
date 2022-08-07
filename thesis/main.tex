@@ -1,0 +1,134 @@
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+% arara: biber: {options: ["--input-directory=build", "--output-directory=build"]}
+% arara: bib2gls: {group: yes, options: ["", "--dir=build", "--tex-encoding=utf-8"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+%
+%% This part is only necessary to correct page number references
+% arara: bib2gls: {group: yes, options: ["", "--dir=build", "--tex-encoding=utf-8"]}
+% arara: lualatex: {shell: yes, options: ["--output-directory=build"]}
+
+\documentclass[english]{ist-thesis}
+
+\input{preamble.tex}
+
+% Bibliography
+\addbibresource{bibliography.bib}
+
+% Glossary
+\GlsXtrLoadResources[
+    src={glossary},              % input glossary.bib
+    sort={en-GB},                % sort entries 'en-GB' style
+    match={entrytype={entry}},   % filter select @entry only
+    type={main},                 % place in the main glossary
+]
+\glsxtrsetgrouptitle{roman}{Latin Symbols}
+\GlsXtrLoadResources[
+    src={nomenclature},          % input nomenclature.bib
+    sort={en-GB},                % sort entries 'en-GB' style
+    type={symbols},              % place in the 'nomenclature' glossary
+    field-aliases={identifier=group},
+    match={
+        entrytype = {symbol}, 
+        group = {roman}
+    },                           % filter select @symbol only, Latin characters
+    %selection={all},            % import all entries, even those unused
+]
+\glsxtrsetgrouptitle{greek}{Greek Symbols}
+\GlsXtrLoadResources[
+    src={nomenclature},          % input nomenclature.bib
+    sort={en-GB},                % sort entries 'en-GB' style
+    type={symbols},              % place in the 'nomenclature' glossary
+    field-aliases={identifier=group},
+    match={
+        entrytype={symbol},
+        group=greek
+    },                           % filter select @symbol only, Greek characters
+    %selection={all},            % import all entries, even those unused
+]
+
+% Set names etc
+\settitle{Partition Scheduling in Distributed Integrated Modular Avionics}
+\setsubtitle{}
+\setcommittee{Prof. Tânia Rute Xavier de Matos Pinto Varela}
+\setchairperson{Prof. José Fernando Alves da Silva}
+\setauthor{João Miguel Fonseca Gonçalves}
+\setdegree{Aerospace Engineering}
+\setsupervisor{Prof. Luís Manuel Marques Custódio \tand Eng. João Miguel Cintra de Jesus Silva}
+\setsupervisorb{Prof. Luís Manuel Marques Custódio}
+\setdate{October 2019}
+\setcoverimage[0.7]{graphics/schedule-cover.tex}
+
+% Set additional pdf metadata
+\hypersetup{
+    pdfsubject = {Artificial Intelligence, Operations Research, Avionics},
+    pdfkeywords = {Arinc 653, Integrated Modular Avionics, Scheduling, Optimization},
+    pdfauthor = {João Gonçalves and Van Darkholme},
+} 
+
+\begin{document}
+
+\makecover
+
+\begin{fabstract}{\gls{a653}, Aviónica Modular Integrada, Escalonamento, Otimização}
+    A arquitetura aviónica modular integrada substituiu as arquiteturas federadas no domínio aviónico, o que permite obter reduções significativas em peso e consumo energético, além de permitir desenvolvimento mais competitivo de aplicações.
+
+    A natureza de partilha de recursos desta arquitetura requer segregação temporal e espacial robusta entre aplicações, o que é alcançado através de um escalonamento temporal estático em hardware aviónico partilhado.
+    Isto levanta um problema complexo de escalonamento em múltiplos processadores, cujo progresso na indústria é limitado, mas que representa um desafio significativo para a integração de sistemas aviónicos.
+
+    Esta dissertação propõe um modelo matemático para o problema de escalonamento temporal de partições complementado com um critério de otimização baseado na escalabilidade e flexibilidade do sistema, e propõe métodos exatos e heurísticos para a sua resolução baseados na literatura existente.
+\end{fabstract}
+
+\begin{tabstract}{\glsxtrlong{a653}, \glsxtrlong{ima}, Scheduling, Optimization}
+    The \glsxtrlong{ima} architecture has replaced federated architectures in the avionic domain, allowing significant weight and power savings and enabling more competitive application development.
+    
+    The resource-sharing nature of this architecture requires robust temporal and spatial segregation between applications, which is achieved by statically scheduling applications on shared avionic hardware.
+    This raises a multiprocessor scheduling problem, automation of which has seen limited progress in industry, but representing a significant challenge for system integration.
+    
+    This dissertation proposes a mathematical model for the partition scheduling problem associated with an optimization criterion based on system scalability and flexibility, and provides both heuristic and exact methods for its solution based on existing literature.
+\end{tabstract}
+
+\begin{acknowledgements}
+    First and foremost, I would like to thank my advisor Professor Luís Custódio for all the guidance and counseling throughout the semester.
+
+    I would also like to extend my thanks to everyone I met at GMV, for making my work there a pleasant moment.
+    A word of appreciation goes to João Cintra and Miguel Barros, who provided me with this topic and advised me all along the way.
+
+    Lastly, my deepest thanks to my family, who supported me all throughout my studies.
+
+\end{acknowledgements}
+
+\tableofcontents
+
+\listoffigures
+
+\listoftables
+
+\printunsrtglossary[nogroupskip, style = super, title = {Glossary}]
+\printunsrtglossary[type = symbols, style = listgroup, title = {Nomenclature}]
+
+\mainstart
+
+% Each chapter will get its own file, stubs go here
+
+\subfile{introduction}
+
+\subfile{background}
+
+\subfile{problem}
+
+\subfile{methodology}
+
+\subfile{results}
+
+\subfile{conclusion}
+
+\appendix
+
+\printbibliography[heading = bibintoc]
+
+\subfile{appendix}
+
+\makespine
+
+\end{document}
